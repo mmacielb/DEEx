@@ -44,15 +44,73 @@ class EarlyExitDNN(nn.Module):
 		self.device = device
 		self.pretrained = pretrained
 
-
-	def dnn_model():
-		
-
+		build_early_exit_dnn = self.dnn_architecture_model()
+	    build_early_exit_dnn()
 
 
+	def dnn_architecture_model(self):
+
+		"""
+	    This method selects the backbone to insert the early exits.
+	    """
+
+	    architecture_dnn_model_dict = {"alenet": self.early_exit_alexnet,
+	    							   "mobilenet": self.early_exit_mobilenet,
+	                                   "efficientnet_b1": self.early_exit_efficientnet_b1}
+
+	    self.pool_size = 7 if (self.model_name == "vgg16") else 1   				#### ver pq 7 ou 1
+	    return architecture_dnn_model_dict.get(self.model_name, self.invalid_model)
+
+
+	def early_exit_block(self):
+
+
+
+	def early_exit_alexnet(self):
+		"""
+		This method inserts early exits into a Alexnet model
+		"""
+
+		self.stages = nn.ModuleList()
+		self.exits = nn.ModuleList()
+		self.layers = nn.ModuleList()
+		self.cost = []
+		self.stage_id = 0
+
+		# Loads the backbone model. In other words, Alexnet architecture provided by Pytorch.
+		backbone_model = models.alexnet(self.pretrained)
+
+		# It verifies if the number of early exits provided is greater than a number of layers in the backbone DNN model.
+		self.verifies_nr_exit_alexnet(backbone_model.features)
+
+		# This obtains the flops total of the backbone model
+		self.total_flops = self.countFlops(backbone_model)
+
+		# This line obtains where inserting an early exit based on the Flops number and accordint to distribution method
+		self.threshold_flop_list = self.where_insert_early_exits()
+
+		for layer in backbone_model.features:
+		  self.layers.append(layer)
+		  if (isinstance(layer, nn.ReLU)) and (self.is_suitable_for_exit()):
+		    self.add_exit_block()
+
+
+
+		self.layers.append(nn.AdaptiveAvgPool2d(output_size=(6, 6)))
+		self.stages.append(nn.Sequential(*self.layers))
+
+
+		self.classifier = backbone_model.classifier
+		self.classifier[6] = nn.Linear(in_features=4096, out_features=self.n_classes, bias=True)
+		self.softmax = nn.Softmax(dim=1)
+		self.set_device()
 
 
 
 
 
-	
+
+
+
+
+
