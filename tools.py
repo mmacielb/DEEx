@@ -58,51 +58,73 @@ def dataset(dataset):
 
 
 
-	if dataset == 'cifar_10':
+	if dataset == 'cifar10':
 		train_set = datasets.CIFAR10(root='./data', train=True, download=True, transform=data_transform)
 		test_set = datasets.CIFAR10(root='./data', train=False, download=True, transform=data_transform)
+
+		classes_list = train_set.classes
+
+		label_list = list(train_set.class_to_idx.values())
+
+
+		print(indices)
+		quit()
+
+
+		# This line defines the size of validation dataset.
+		val_size = int(split_ratio*len(train_set))
+
+		# This line defines the size of training dataset.
+		train_size = int(len(train_set) - val_size)
+
+		#This line splits the training dataset into train and validation, according split ratio provided as input.
+		train_dataset, val_dataset = random_split(train_set, [train_size, val_size])
 
 
 	if dataset == 'cifar100':
 		train_set = datasets.CIFAR100(root='./data', train=True, download=True, transform=data_transform)
 		test_set = datasets.CIFAR100(root='./data', train=False, download=True, transform=data_transform)
 
-	if dataset == 'caltech_256':
+		classes_list = train_set.classes
+
+		label_list = list(train_set.class_to_idx.values())
+
+		# This line defines the size of validation dataset.
+		val_size = int(split_ratio*len(train_set))
+
+		# This line defines the size of training dataset.
+		train_size = int(len(train_set) - val_size)
+
+		#This line splits the training dataset into train and validation, according split ratio provided as input.
+		train_dataset, val_dataset = random_split(train_set, [train_size, val_size])
+
+
+	if dataset == 'Caltech256':
 		data_set = datasets.Caltech256(root='./data', download=True, transform=data_transform)
 
-		classes_list = data_set.classes
+		# classes_list = data_set.classes
+		# label_list = list(data_set.class_to_idx.values())
 
-		label_list = list(data_set.class_to_idx.values())
+		indices = np.arange(len(train_set))
 
-		return classes_list, label_list
+		np.random.shuffle(indices)
+
+
+		teste = data_set[118]
+		print(len(data_set))
+
+
+
+
+	return classes_list, label_list
 		
-a, b = datasets('cifar_10')
+dataset = 'cifar10'
+# dataset = 'caltech256'
+
+a, b = loadDataset(dataset)
+
+# print(teste)
 
 print(a,'\n',b)
-
-
-
-def quadrado(numero):
-	res = numero**2
-	return res
-
-teste = quadrado(4)
-print(teste)
-
-
-# def backbone_model(backbone_model,pretrained):
-
-
-# 	backbone_model = models.backbone_model(pretrained = pretrained)
-
-# 	print('ok!!')
-
-# 	return backbone_model
-
-# backbone_model = 'alexnet'
-# pretrained = True
-
-# backbone_model = backbone_model(backbone_model,pretrained)
-
 
 	
