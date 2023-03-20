@@ -88,11 +88,24 @@ class EarlyExitDNN(nn.Module):
     return branch
 
 
-		
-	def early_exit_alexnet(self):
-		"""
-		This method inserts early exits into a Alexnet model
-		"""
+
+
+class EarlyExitAlexnet(nn.Module):
+
+	def __init__(self, pretrained=True):
+	#def __init__(self, input_dim, device, pretrained=True):
+
+		super(EarlyExitAlexnet, self).__init__()
+
+		self.n_branchs = 2
+		self.position_list = [2,5]
+		self.n_classes = 10
+		self.input_dim = input_dim
+		self.device = device
+		self.pretrained = pretrained
+
+		# build_early_exit_dnn = self.dnn_architecture_model()
+		# build_early_exit_dnn()
 
 		self.stages = nn.ModuleList()
 		self.exits = nn.ModuleList()
@@ -118,14 +131,14 @@ class EarlyExitDNN(nn.Module):
 				sel.exits.append(early_exit_block_alexnet(self,n))
 				self.stage_id += 1
 
-		self.layers.append(nn.AdaptiveAvgPool2d(output_size=(6, 6)))				### coloca a saída no formato definido no outpusize. Esta fora do features e do classifier da backbone 
+		self.layers.append(nn.AdaptiveAvgPool2d(output_size=(6, 6)))				   ## coloca a saída no formato definido no outpusize. Esta fora do features e do classifier da backbone 
 		self.stages.append(nn.Sequential(*self.layers))
 
 		#Aqui a gente adiciona as camadas neurais que vão classificar, a partir dos atributos extraídos anteriormente.
 		self.classifier = backbone_model.classifier
 		self.classifier[1] = nn.Linear(9216, 4096)
 		self.classifier[4] = nn.Linear(4096, 1024)
-		self.classifier[6] = nn.Linear(1024, n_classes) #Nº de damdas do dataset que se quer classificar.    
+		self.classifier[6] = nn.Linear(1024, self.n_classes) #Nº de damdas do dataset que se quer classificar.    
 		self.softmax = nn.Softmax(dim=1)
 
 		# # This line obtains where inserting an early exit based on the Flops number and accordint to distribution method
