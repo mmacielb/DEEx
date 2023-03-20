@@ -40,11 +40,11 @@ class EarlyExitDNN(nn.Module):
 		super(EarlyExitDNN, self).__init__()
 
 		self.modelName = modelName
-		# self.n_branchs = n_branchs
-		# self.position_list = position_list
-		# self.n_classes = n_classes
-		# self.input_dim = input_dim
-		# self.device = device
+		self.n_branchs = n_branchs
+		self.position_list = position_list
+		self.n_classes = n_classes
+		self.input_dim = input_dim
+		self.device = device
 		self.pretrained = pretrained
 
 		# build_early_exit_dnn = self.dnn_architecture_model()
@@ -65,11 +65,30 @@ class EarlyExitDNN(nn.Module):
 		# return architecture_dnn_model_dict.get(self.model_name, self.invalid_model)
 
 
-	def early_exit_block(self):
-		pass
+	def flatten(self,input):
+		return input.view(input.shape[0],-1)
 
-		# 1 convolucional + 2 sequenciais
 
+	def early_exit_block_alexnet(self,n):
+
+		conv = lambda n: [nn.Conv2d(n, 32, kernel_size=3, stride=1, padding=1), nn.ReLU(inplace=True)]
+
+		maxpool = nn.MaxPool2d(kernel_size=3)
+
+		dropout =  nn.Dropout(p=0.5, inplace=False).to(device)
+
+		adaptative = nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(device)     ### Faz um pooling e coloca a saída no formato definido no outpusize
+
+    total_neurons = 6*6*128
+
+    linear = nn.Linear(in_features=total_neurons, out_features=10, bias=True).to(device)
+
+    branch = conv(n)+maxpool+dropout+adaptative+flatten()+linear
+
+    return branch
+
+
+		
 	def early_exit_alexnet(self):
 		"""
 		This method inserts early exits into a Alexnet model
@@ -86,11 +105,28 @@ class EarlyExitDNN(nn.Module):
 
 		# print(backbone_model)
 
-		# It verifies if the number of early exits provided is greater than a number of layers in the backbone DNN model.
-		# tools.verifies_nr_exit_alexnet(backbone_model.features)
+		if self.n_branchs > 3:
+			print('the number of branchs is greather then the layes in alexnet model')
+			quit()
 
-		# # This obtains the flops total of the backbone model
-		# self.total_flops = self.countFlops(backbone_model)
+		conv_teste = nn.Conv2d(16, 33, 3, stride=2)
+
+		for i, layer in enumarate(backbone_model.features):
+			if type(layer) == type(conv_teste):
+				n = layer.output_channels
+			if i == position_list[self.stage_id]:
+				sel.exits.append(early_exit_block_alexnet(self,n))
+				self.stage_id += 1
+
+		self.layers.append(nn.AdaptiveAvgPool2d(output_size=(6, 6)))				### coloca a saída no formato definido no outpusize. Esta fora do features e do classifier da backbone 
+		self.stages.append(nn.Sequential(*self.layers))
+
+		#Aqui a gente adiciona as camadas neurais que vão classificar, a partir dos atributos extraídos anteriormente.
+		self.classifier = backbone_model.classifier
+		self.classifier[1] = nn.Linear(9216, 4096)
+		self.classifier[4] = nn.Linear(4096, 1024)
+		self.classifier[6] = nn.Linear(1024, n_classes) #Nº de damdas do dataset que se quer classificar.    
+		self.softmax = nn.Softmax(dim=1)
 
 		# # This line obtains where inserting an early exit based on the Flops number and accordint to distribution method
 		# self.threshold_flop_list = self.where_insert_early_exits()
