@@ -79,13 +79,13 @@ class EarlyExitDNN(nn.Module):
 
 		adaptative = nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(device)     ### Faz um pooling e coloca a saída no formato definido no outpusize
 
-    total_neurons = 6*6*128
+		total_neurons = 6*6*128
 
-    linear = nn.Linear(in_features=total_neurons, out_features=10, bias=True).to(device)
+		linear = nn.Linear(in_features=total_neurons, out_features=10, bias=True).to(device)
 
-    branch = conv(n)+maxpool+dropout+adaptative+flatten()+linear
+		branch = conv(n)+maxpool+dropout+adaptative+flatten()+linear
 
-    return branch
+		return *branch
 
 
 
@@ -128,7 +128,7 @@ class EarlyExitAlexnet(nn.Module):
 			if type(layer) == type(conv_teste):
 				n = layer.output_channels
 			if i == position_list[self.stage_id]:
-				sel.exits.append(early_exit_block_alexnet(self,n))
+				sel.exits.append(early_exit_block(self,n))
 				self.stage_id += 1
 
 		self.layers.append(nn.AdaptiveAvgPool2d(output_size=(6, 6)))				   ## coloca a saída no formato definido no outpusize. Esta fora do features e do classifier da backbone 
@@ -140,6 +140,78 @@ class EarlyExitAlexnet(nn.Module):
 		self.classifier[4] = nn.Linear(4096, 1024)
 		self.classifier[6] = nn.Linear(1024, self.n_classes) #Nº de damdas do dataset que se quer classificar.    
 		self.softmax = nn.Softmax(dim=1)
+
+
+	def early_exit_block(self,n):
+
+		conv = lambda n: [nn.Conv2d(n, 32, kernel_size=3, stride=1, padding=1), nn.ReLU(inplace=True)]
+
+		maxpool = nn.MaxPool2d(kernel_size=3)
+
+		dropout =  nn.Dropout(p=0.5, inplace=False).to(device)
+
+		adaptative = nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(device)     ### Faz um pooling e coloca a saída no formato definido no outpusize
+
+		total_neurons = 6*6*128
+
+		linear = nn.Linear(in_features=total_neurons, out_features=10, bias=True).to(device)
+
+		branch = conv(n)+maxpool+dropout+adaptative+flatten()+linear
+
+		return *branch
+
+	def flatten(self,input):
+		return input.view(input.shape[0],-1)
+
+
+
+	def forward(self,x):
+		output = {i:[] for i in range(self.n_branchs+1)}
+		confidence = {i:[] for i in range(self.n_branchs+1)}
+		infered_class = {i:[] for i in range(self.n_branchs+1)}
+
+		for i, stage in enumerate(self.exits):
+			res = self.stages[i](res)
+			res_branch = self.exits[i](res)
+
+		res = self.stages[-1](res)
+		
+		res = torch.flatten(res, 1)
+
+		output = self.classifier(res)
+
+		confidence, infered_class = torch.max(self.softmax(output), 1)
+		#Confidence mede a confiança da predição e infered_calss aponta a classe inferida pela DNN
+
+		return output, confidence, infered_class
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 		# # This line obtains where inserting an early exit based on the Flops number and accordint to distribution method
 		# self.threshold_flop_list = self.where_insert_early_exits()
@@ -205,7 +277,7 @@ print(backbone_model)
 
 #     if (exit_type != 'plain'):
 #       self.layers.append(nn.AdaptiveAvgPool2d(pool_size))
-    
+	
 #     #This line defines the data shape that fully-connected layer receives.
 #     current_channel, current_width, current_height = self.get_current_data_shape()
 
