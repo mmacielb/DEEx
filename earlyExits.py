@@ -57,7 +57,7 @@ class EarlyExitDNN(nn.Module):
 		This method selects the backbone to insert the early exits.
 		"""
 
-		architecture_dnn_model_dict = {"alexnet": self.early_exit_alexnet} #,
+		architecture_dnn_model_dict = {"alexnet": EarlyExitAlexnet(self)} #,
 									   # "mobilenet": self.early_exit_mobilenet,
 									   # "efficientnet_b1": self.early_exit_efficientnet_b1}
 
@@ -65,34 +65,20 @@ class EarlyExitDNN(nn.Module):
 		# return architecture_dnn_model_dict.get(self.model_name, self.invalid_model)
 
 
-	def flatten(self,input):
-		return input.view(input.shape[0],-1)
 
-
-	def early_exit_block_alexnet(self,n):
-
-		conv = lambda n: [nn.Conv2d(n, 32, kernel_size=3, stride=1, padding=1), nn.ReLU(inplace=True)]
-
-		maxpool = nn.MaxPool2d(kernel_size=3)
-
-		dropout =  nn.Dropout(p=0.5, inplace=False).to(device)
-
-		adaptative = nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(device)     ### Faz um pooling e coloca a saída no formato definido no outpusize
-
-		total_neurons = 6*6*128
-
-		linear = nn.Linear(in_features=total_neurons, out_features=10, bias=True).to(device)
-
-		branch = conv(n)+maxpool+dropout+adaptative+flatten()+linear
-
-		return *branch
-
-
+class Flatten(nn.Module):
+	def __init__(self):
+		super(Flatten, self).__init__()
+	
+	def forward(self, x):
+		# Do your print / debug stuff here
+		x = x.view(x.size(0), -1)
+		return x
 
 
 class EarlyExitAlexnet(nn.Module):
 
-	def __init__(self, pretrained=True):
+	def __init__(self):
 	#def __init__(self, input_dim, device, pretrained=True):
 
 		super(EarlyExitAlexnet, self).__init__()
@@ -124,12 +110,13 @@ class EarlyExitAlexnet(nn.Module):
 
 		conv_teste = nn.Conv2d(16, 33, 3, stride=2)
 
-		for i, layer in enumarate(backbone_model.features):
+		for i, layer in enumerate(backbone_model.features):
 			if type(layer) == type(conv_teste):
-				n = layer.output_channels
-			if i == position_list[self.stage_id]:
-				sel.exits.append(early_exit_block(self,n))
-				self.stage_id += 1
+				n = layer.out_channels
+			if self.stage_id < len(self.position_list):
+				if i == position_list[self.stage_id]:
+					self.exits.append(self.early_exit_block(self,n))
+					self.stage_id += 1
 
 		self.layers.append(nn.AdaptiveAvgPool2d(output_size=(6, 6)))				   ## coloca a saída no formato definido no outpusize. Esta fora do features e do classifier da backbone 
 		self.stages.append(nn.Sequential(*self.layers))
@@ -144,7 +131,7 @@ class EarlyExitAlexnet(nn.Module):
 
 	def early_exit_block(self,n):
 
-		conv = lambda n: [nn.Conv2d(n, 32, kernel_size=3, stride=1, padding=1), nn.ReLU(inplace=True)]
+		conv = nn.Conv2d(n, 32, kernel_size=3, stride=1, padding=1)
 
 		maxpool = nn.MaxPool2d(kernel_size=3)
 
@@ -156,13 +143,12 @@ class EarlyExitAlexnet(nn.Module):
 
 		linear = nn.Linear(in_features=total_neurons, out_features=10, bias=True).to(device)
 
-		branch = conv(n)+maxpool+dropout+adaptative+flatten()+linear
+		branch = nn.ModuleList([self.conv,nn.ReLU(inplace=True),self.maxpool, self.dropout, self.adaptative, Flatten(), self.linear])
 
-		return *branch
+		return branch
 
-	def flatten(self,input):
-		return input.view(input.shape[0],-1)
-
+	# def flatten(self,input):
+	# 	return input.view(input.shape[0],-1)
 
 
 	def forward(self,x):
@@ -173,15 +159,23 @@ class EarlyExitAlexnet(nn.Module):
 		for i, stage in enumerate(self.exits):
 			res = self.stages[i](res)
 			res_branch = self.exits[i](res)
+			confidence_branch, infered_class_branch = torch.max(self.softmax(res_branch), 1)
+			output[i].append= res_branch
+			confidence[i].append = confidence_branch
+			infered_class[i].append = infered_class_branch
 
 		res = self.stages[-1](res)
 		
 		res = torch.flatten(res, 1)
 
-		output = self.classifier(res)
+		output_bb = self.classifier(res)
 
-		confidence, infered_class = torch.max(self.softmax(output), 1)
+		confidence_bb, infered_class_bb = torch.max(self.softmax(output), 1)
 		#Confidence mede a confiança da predição e infered_calss aponta a classe inferida pela DNN
+
+		output[self.n_branchs].append= res_branch
+		confidence[self.n_branchs+1].append = confidence_branch
+		infered_class[self.n_branchs+1].append = infered_class_branch
 
 		return output, confidence, infered_class
 
@@ -231,6 +225,9 @@ class EarlyExitAlexnet(nn.Module):
 		# self.classifier[6] = nn.Linear(in_features=4096, out_features=self.n_classes, bias=True)
 		# self.softmax = nn.Softmax(dim=1)
 		# self.set_device()
+
+
+
 
 # backbone_model = models.mobilenet_v2(pretrained = True)
 
