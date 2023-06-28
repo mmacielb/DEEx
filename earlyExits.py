@@ -183,6 +183,11 @@ class EarlyExitAlexnet(nn.Module):
 
 
 
+# class EarlyExitMobilenet(nn.Module):
+
+
+
+# class EarlyExitEfficientnet_b1(nn.Module):
 
 
 
@@ -206,25 +211,6 @@ class EarlyExitAlexnet(nn.Module):
 
 
 
-
-		# # This line obtains where inserting an early exit based on the Flops number and accordint to distribution method
-		# self.threshold_flop_list = self.where_insert_early_exits()
-
-		# for layer in backbone_model.features:
-		#   self.layers.append(layer)
-		#   if (isinstance(layer, nn.ReLU)) and (self.is_suitable_for_exit()):
-		#     self.add_exit_block()
-
-
-
-		# self.layers.append(nn.AdaptiveAvgPool2d(output_size=(6, 6)))
-		# self.stages.append(nn.Sequential(*self.layers))
-
-
-		# self.classifier = backbone_model.classifier
-		# self.classifier[6] = nn.Linear(in_features=4096, out_features=self.n_classes, bias=True)
-		# self.softmax = nn.Softmax(dim=1)
-		# self.set_device()
 
 
 
@@ -238,52 +224,3 @@ backbone_model = models.alexnet(pretrained = True)
 
 # print(len(list(backbone_model.children())))
 print(backbone_model)
-
-
-
-
-#  def add_exit_block(self):
-#     """
-#     This method adds an early exit in the suitable position.
-#     """
-#     input_tensor = torch.rand(1, self.channel, self.width, self.height)
-
-#     self.stages.append(nn.Sequential(*self.layers))
-#     x = torch.rand(1, 3, 224, 224)#.to(self.device)
-#     feature_shape = nn.Sequential(*self.stages)(x).shape
-#     self.exits.append(EarlyExitBlock(feature_shape, self.pool_size, self.n_classes, self.exit_type, self.device))#.to(self.device))
-#     self.layers = nn.ModuleList()
-#     self.stage_id += 1    
-
-
-# class EarlyExitBlock(nn.Module):
-#   """
-#   This EarlyExitBlock allows the model to terminate early when it is confident for classification.
-#   """
-#   def __init__(self, input_shape, pool_size, n_classes, exit_type, device):
-#     super(EarlyExitBlock, self).__init__()
-#     self.input_shape = input_shape
-
-#     _, channel, width, height = input_shape
-#     self.expansion = width * height if exit_type == 'plain' else 1
-
-#     self.layers = nn.ModuleList()
-
-#     if (exit_type == 'bnpool'):
-#       self.layers.append(nn.BatchNorm2d(channel))
-
-#     if (exit_type != 'plain'):
-#       self.layers.append(nn.AdaptiveAvgPool2d(pool_size))
-	
-#     #This line defines the data shape that fully-connected layer receives.
-#     current_channel, current_width, current_height = self.get_current_data_shape()
-
-#     self.layers = self.layers#.to(device)
-
-#     #This line builds the fully-connected layer
-#     self.classifier = nn.Sequential(nn.Linear(current_channel*current_width*current_height, n_classes))#.to(device)
-
-#     self.softmax_layer = nn.Softmax(dim=1)
-
-
-
