@@ -56,8 +56,6 @@ def dataset(dataset):
 	])
 
 
-
-
 	if dataset == 'cifar10':
 		train_set = datasets.CIFAR10(root='./data', train=True, download=True, transform=data_transform)
 		test_set = datasets.CIFAR10(root='./data', train=False, download=True, transform=data_transform)
