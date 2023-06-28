@@ -128,7 +128,7 @@ a, b = loadDataset(dataset)
 print(a,'\n',b)
 
 
-def verifies_nr_exit_alexnet(bb_model):
+# def verifies_nr_exit_alexnet(bb_model):
 	
-	pass
+# 	pass
 	
