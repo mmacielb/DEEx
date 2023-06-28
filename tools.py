@@ -29,20 +29,22 @@ from torchvision.utils import save_image
 from torchvision import transforms, utils, datasets
 #from torchsummary import summary
 
-from sklearn.metrics import accuracy_score, precision_score, confusion_matrix
+# from sklearn.metrics import accuracy_score, precision_score, confusion_matrix
 
 
-def dataset(dataset):
+def Dataset(dataset,train=True):
 
 	mean = [0.457342265910642, 0.4387686270106377, 0.4073427106250871]
 	std = [0.26753769276329037, 0.2638145880487105, 0.2776826934044154]
+
+	split_ratio = 0.1
 
 
 	### Pytorhch
 	#mean=[0.485, 0.456, 0.40
 	#std = [0.229, 0.224, 0.225]
 
-	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+	# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 	# device = torch.device('cpu')
 
@@ -57,26 +59,29 @@ def dataset(dataset):
 
 
 	if dataset == 'cifar10':
-		train_set = datasets.CIFAR10(root='./data', train=True, download=True, transform=data_transform)
-		test_set = datasets.CIFAR10(root='./data', train=False, download=True, transform=data_transform)
+		if train:
+			train_set = datasets.CIFAR10(root='./data', train=True, download=True, transform=data_transform)
+			classes_list = train_set.classes
+			label_list = list(train_set.class_to_idx.values())
+		
+			# This line defines the size of validation dataset.
+			val_size = int(split_ratio*len(train_set))
 
-		classes_list = train_set.classes
+			# This line defines the size of training dataset.
+			train_size = int(len(train_set) - val_size)
 
-		label_list = list(train_set.class_to_idx.values())
+			#This line splits the training dataset into train and validation, according split ratio provided as input.
+			train_dataset, val_dataset = random_split(train_set, [train_size, val_size])
+
+		else:	
+			test_set = datasets.CIFAR10(root='./data', train=False, download=True, transform=data_transform)
+			classes_list = test_set.classes
+			label_list = list(test_set.class_to_idx.values())
+
+		# print(indices)
+		# quit()
 
 
-		print(indices)
-		quit()
-
-
-		# This line defines the size of validation dataset.
-		val_size = int(split_ratio*len(train_set))
-
-		# This line defines the size of training dataset.
-		train_size = int(len(train_set) - val_size)
-
-		#This line splits the training dataset into train and validation, according split ratio provided as input.
-		train_dataset, val_dataset = random_split(train_set, [train_size, val_size])
 
 
 	if dataset == 'cifar100':
@@ -119,7 +124,7 @@ def dataset(dataset):
 dataset = 'cifar10'
 # dataset = 'caltech256'
 
-a, b = loadDataset(dataset)
+a, b = Dataset(dataset)
 
 # print(teste)
 
