@@ -35,8 +35,23 @@ import earlyExits
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+dataset = 'cifar10'
+
+bt_size = 128
+
+classes_list, label_list,train_loader, val_loader = tools.Dataset(dataset,bt_size,train=True)
+
+
+
+
 
 
 backbone = Backbone()
 
 backbone = backbone.to(device)
+
+
+if __name__ == '__main__':
+
+
+	

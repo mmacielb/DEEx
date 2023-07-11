@@ -32,12 +32,13 @@ from torchvision import transforms, utils, datasets
 # from sklearn.metrics import accuracy_score, precision_score, confusion_matrix
 
 
-def Dataset(dataset,train=True):
+def Dataset(dataset,bt_size,train=True):
 
 	mean = [0.457342265910642, 0.4387686270106377, 0.4073427106250871]
 	std = [0.26753769276329037, 0.2638145880487105, 0.2776826934044154]
 
 	split_ratio = 0.1
+	batch_size = batch_size
 
 
 	### Pytorhch
@@ -73,10 +74,21 @@ def Dataset(dataset,train=True):
 			#This line splits the training dataset into train and validation, according split ratio provided as input.
 			train_dataset, val_dataset = random_split(train_set, [train_size, val_size])
 
+			#This block creates data loaders for training, validation and test datasets.
+
+			train_loader = DataLoader(train_dataset, batch_size = bt_size, shuffle=True, num_workers=2, pin_memory=True)
+			val_loader = DataLoader(val_dataset, batch_size = bt_size_test, num_workers=2, pin_memory=True)
+
+
 		else:	
 			test_set = datasets.CIFAR10(root='./data', train=False, download=True, transform=data_transform)
 			classes_list = test_set.classes
 			label_list = list(test_set.class_to_idx.values())
+
+			#This block creates data loaders for training, validation and test datasets.
+			test_loader = DataLoader(test_dataset, batch_size = bt_size_test, num_workers=2, pin_memory=True)
+
+
 
 		# print(indices)
 		# quit()
@@ -119,19 +131,16 @@ def Dataset(dataset,train=True):
 
 
 
-	return classes_list, label_list
-		
-dataset = 'cifar10'
-# dataset = 'caltech256'
+	if train:
+		return classes_list, label_list,train_loader, val_loader
 
-a, b = Dataset(dataset)
-
-# print(teste)
-
-print(a,'\n',b)
+	else:
+		return classes_list, label_list, test_loader
 
 
-# def verifies_nr_exit_alexnet(bb_model):
-	
-# 	pass
+# dataset = 'cifar10'
+
+# a, b = Dataset(dataset)
+
+# print(a,'\n',b)
 	
