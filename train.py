@@ -51,7 +51,7 @@ backbone = Backbone()
 backbone = backbone.to(device)
 
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
 
 	
