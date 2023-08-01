@@ -29,8 +29,14 @@ from torchvision.utils import save_image
 from torchvision import transforms, utils, datasets
 
 import tools
-import earlyExits
+import earlyExits as ee
 #from torchsummary import summary
+
+
+#receber o datasets
+## Definir os Parametros (utils)
+#receber o modelo
+
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -41,6 +47,8 @@ bt_size = 128
 
 classes_list, label_list,train_loader, val_loader = tools.Dataset(dataset,bt_size,train=True)
 
+
+model = ee.EarlyExitDNN()
 
 
 

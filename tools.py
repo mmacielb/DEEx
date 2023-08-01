@@ -129,8 +129,6 @@ def Dataset(dataset,bt_size,train=True):
 		print(len(data_set))
 
 
-
-
 	if train:
 		return classes_list, label_list,train_loader, val_loader
 
