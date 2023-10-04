@@ -38,28 +38,45 @@ import earlyExits as ee
 #receber o modelo
 
 
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 dataset = 'cifar10'
 
 bt_size = 128
 
-classes_list, label_list,train_loader, val_loader = tools.Dataset(dataset,bt_size,train=True)
+classes_list, label_list,train_loader, val_loader = tools.data_set(dataset,bt_size,train=True)
 
 
 model = ee.EarlyExitDNN()
 
+model = model.to(device)
 
 
+# Paremetros
 
+# Preparar o que eu quero de resutados
 
-backbone = Backbone()
+## chamar a rede para treinar
 
-backbone = backbone.to(device)
+## Treino para cada epoca
+
 
 
 
 if __name__ == '__main__':
+
+
+	epoch = 100
+
+
+	## Tx de apredizado
+	lr = 0.001 ##ou 
+	#lr=1.5e-4
+
+	#Otimazador
+	opt = 'SGD'
+	# opt = 'adam'
+
+
 
 	

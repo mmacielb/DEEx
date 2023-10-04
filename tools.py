@@ -32,7 +32,7 @@ from torchvision import transforms, utils, datasets
 # from sklearn.metrics import accuracy_score, precision_score, confusion_matrix
 
 
-def Dataset(dataset,bt_size,train=True):
+def data_set(dataset,bt_size,train=True):
 
 	mean = [0.457342265910642, 0.4387686270106377, 0.4073427106250871]
 	std = [0.26753769276329037, 0.2638145880487105, 0.2776826934044154]
@@ -40,14 +40,6 @@ def Dataset(dataset,bt_size,train=True):
 	split_ratio = 0.1
 	batch_size = batch_size
 
-
-	### Pytorhch
-	#mean=[0.485, 0.456, 0.40
-	#std = [0.229, 0.224, 0.225]
-
-	# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-	# device = torch.device('cpu')
 
 	input_dim = 224
 
@@ -136,9 +128,28 @@ def Dataset(dataset,bt_size,train=True):
 		return classes_list, label_list, test_loader
 
 
-# dataset = 'cifar10'
 
-# a, b = Dataset(dataset)
+def parameter(device,lr,opt):
+	
+	#lr=0.001 ##ou 
+	#lr=1.5e-4
 
-# print(a,'\n',b)
+
+	#criterion = nn.NLLLoss()
+	criterion = nn.CrossEntropyLoss()
+	criterion = criterion.to(device)
+
+	#opt = 'SGD'
+	# opt = 'adam'
+
+	if opt == 'adam':
+	  optimize_b1 = optim.Adam(branch1.parameters(),lr = lr)
+	  optimize_b2 = optim.Adam(branch2.parameters(),lr = lr)
+	  optimize_bb = optim.Adam(backbone.parameters(),lr = lr)
+
+	else:
+	  optimize_b1 = optim.SGD(branch1.parameters(),lr = 0.001,momentum=0.9)
+	  optimize_b2 = optim.SGD(branch2.parameters(),lr = 0.001,momentum=0.9)
+	  optimize_bb = optim.SGD(backbone.parameters(),lr = 0.001,momentum=0.9)
+
 	
