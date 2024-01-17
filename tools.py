@@ -129,7 +129,7 @@ def data_set(dataset,bt_size,train=True):
 
 
 
-def parameter(device,lr,opt):
+def parameter(model,lr,opt):
 	
 	#lr=0.001 ##ou 
 	#lr=1.5e-4
@@ -137,19 +137,69 @@ def parameter(device,lr,opt):
 
 	#criterion = nn.NLLLoss()
 	criterion = nn.CrossEntropyLoss()
-	criterion = criterion.to(device)
 
 	#opt = 'SGD'
 	# opt = 'adam'
 
 	if opt == 'adam':
-	  optimize_b1 = optim.Adam(branch1.parameters(),lr = lr)
-	  optimize_b2 = optim.Adam(branch2.parameters(),lr = lr)
-	  optimize_bb = optim.Adam(backbone.parameters(),lr = lr)
+		optimize = optim.Adam(model.parameters(),lr = lr)
 
 	else:
-	  optimize_b1 = optim.SGD(branch1.parameters(),lr = 0.001,momentum=0.9)
-	  optimize_b2 = optim.SGD(branch2.parameters(),lr = 0.001,momentum=0.9)
-	  optimize_bb = optim.SGD(backbone.parameters(),lr = 0.001,momentum=0.9)
+		optimize = optim.SGD(model.parameters(),lr = lr,momentum=0.9)
 
+	return criterion, optimize
+
+def initialize(classes_list,model):
+
+	exits = model.n_branchs+1
+
+	col = ['epoch']
+
+	test_conf_matrix = np.zeros(len(classes_list)*len(classes_list)).reshape(len(classes_list),len(classes_list))
+
+	all_conf_matrix = {}
+	train_times = {}
+	val_times = {}
+
+	for i in range(1,exits+1):
+		col.append('loss_'+str(i),'acc_'+str(i))
+		all_conf_matrix[i] = test_conf_matrix
+		train_times[i] = 0.0 
+		val_times[i] = 0.0 
+
+
+	train_res = {i: [] for i in col}
+	val_res = {i: [] for i in col}
+	#test_res = {i: [] for i in col}
+
+	return
+
+
+def initialize_epoch(classes_list,model):
+
+
+	return
+
+
+
+
+
+
+for epc in range(epochs):
 	
+	train_acc_b1 = 0.0
+	train_acc_b2 = 0.0
+	train_acc_bb = 0.0
+	val_acc_b1 = 0.0
+	val_acc_b2 = 0.0
+	val_acc_b3 = 0.0
+	
+	running_loss_dict = {i: [] for i in range(1, (n_exits)+1)}
+	#running_loss = []
+	train_acc_dict = {i: [] for i in range(1, (n_exits)+1)}
+	#train_acc_list = []
+	val_loss_dict = {i: [] for i in range(1, (n_exits)+1)}
+	#running_loss = []
+	val_acc_dict = {i: [] for i in range(1, (n_exits)+1)}
+	#train_acc_list = []
+

@@ -33,32 +33,7 @@ import earlyExits as ee
 #from torchsummary import summary
 
 
-#receber o datasets
-## Definir os Parametros (utils)
-#receber o modelo
 
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-dataset = 'cifar10'
-
-bt_size = 128
-
-classes_list, label_list,train_loader, val_loader = tools.data_set(dataset,bt_size,train=True)
-
-
-model = ee.EarlyExitDNN()
-
-model = model.to(device)
-
-
-# Paremetros
-
-# Preparar o que eu quero de resutados
-
-## chamar a rede para treinar
-
-## Treino para cada epoca
 
 
 
@@ -78,5 +53,34 @@ if __name__ == '__main__':
 	# opt = 'adam'
 
 
+	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-	
+	dataset = 'cifar10'
+
+	bt_size = 128
+
+	classes_list, label_list,train_loader, val_loader = tools.data_set(dataset,bt_size,train=True)
+
+
+	model = ee.EarlyExitDNN()
+	model = model.to(device)
+
+
+	# Paremetros de configuracao da rede neural
+	criterion, optimize = tools.parameter(model,lr,opt)
+	criterion = criterion.to(device)
+	softmax = nn.Softmax(dim=1)
+
+
+	# Preparar o que eu quero de resutados
+
+
+
+
+
+
+	## chamar a rede para treinar
+
+
+	## Treino para cada epoca
+	start_train_time = time.time()
