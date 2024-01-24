@@ -31,18 +31,15 @@ from torchvision import transforms, utils, datasets
 import tools
 import earlyExits as ee
 #from torchsummary import summary
-
-
-
-
+from temperature_scaling import ModelWithTemperature
 
 
 
 if __name__ == '__main__':
 
+	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 	epoch = 100
-
 
 	## Tx de apredizado
 	lr = 0.001 ##ou 
@@ -52,15 +49,11 @@ if __name__ == '__main__':
 	opt = 'SGD'
 	# opt = 'adam'
 
-
-	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 	dataset = 'cifar10'
 
 	bt_size = 128
 
-	classes_list, label_list,train_loader, val_loader = tools.data_set(dataset,bt_size,train=True)
-
+	classes_list, label_list,train_loader, valid_loader = tools.data_set(dataset,bt_size,train=True)
 
 	model = ee.EarlyExitDNN()
 	model = model.to(device)
@@ -80,7 +73,19 @@ if __name__ == '__main__':
 
 
 	## chamar a rede para treinar
+	for epc in range(epochs):
+
+	    model.train()
+
+	    for images,target in tqdm(train_loader):
+
+	        images, target = images.to(device), target.to(device)
 
 
-	## Treino para cada epoca
-	start_train_time = time.time()
+	scaled_model = ModelWithTemperature(model)
+	scaled_model.set_temperature(valid_loader)
+
+
+
+		## Treino para cada epoca
+		start_train_time = time.time()

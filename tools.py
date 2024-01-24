@@ -32,7 +32,7 @@ from torchvision import transforms, utils, datasets
 # from sklearn.metrics import accuracy_score, precision_score, confusion_matrix
 
 
-def data_set(dataset,bt_size,train=True):
+def data_set(dataset,bt_size,train):
 
 	mean = [0.457342265910642, 0.4387686270106377, 0.4073427106250871]
 	std = [0.26753769276329037, 0.2638145880487105, 0.2776826934044154]
@@ -89,21 +89,27 @@ def data_set(dataset,bt_size,train=True):
 
 
 	if dataset == 'cifar100':
-		train_set = datasets.CIFAR100(root='./data', train=True, download=True, transform=data_transform)
-		test_set = datasets.CIFAR100(root='./data', train=False, download=True, transform=data_transform)
+		if train:
+			train_set = datasets.CIFAR100(root='./data', train=True, download=True, transform=data_transform)
 
-		classes_list = train_set.classes
+			classes_list = train_set.classes
 
-		label_list = list(train_set.class_to_idx.values())
+			label_list = list(train_set.class_to_idx.values())
 
-		# This line defines the size of validation dataset.
-		val_size = int(split_ratio*len(train_set))
+			# This line defines the size of validation dataset.
+			val_size = int(split_ratio*len(train_set))
 
-		# This line defines the size of training dataset.
-		train_size = int(len(train_set) - val_size)
+			# This line defines the size of training dataset.
+			train_size = int(len(train_set) - val_size)
 
-		#This line splits the training dataset into train and validation, according split ratio provided as input.
-		train_dataset, val_dataset = random_split(train_set, [train_size, val_size])
+			#This line splits the training dataset into train and validation, according split ratio provided as input.
+			train_dataset, val_dataset = random_split(train_set, [train_size, val_size])
+
+			train_loader = DataLoader(train_dataset, batch_size = bt_size, shuffle=True, num_workers=2, pin_memory=True)
+			val_loader = DataLoader(val_dataset, batch_size = bt_size_test, num_workers=2, pin_memory=True)
+
+		else:
+			test_set = datasets.CIFAR100(root='./data', train=False, download=True, transform=data_transform)
 
 
 	if dataset == 'Caltech256':
