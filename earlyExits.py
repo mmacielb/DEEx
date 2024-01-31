@@ -34,8 +34,8 @@ from torchvision import transforms, utils, datasets
 
 class EarlyExitDNN(nn.Module):
 
-	def __init__(self, modelName, pretrained=True):
-	#def __init__(self, modelName, n_branchs, position_list, n_classes, input_dim, device, pretrained=True):
+	#def __init__(self, modelName, pretrained=True):
+	def __init__(self, modelName, n_branchs, position_list, n_classes, input_dim, device, pretrained=True):
 
 		super(EarlyExitDNN, self).__init__()
 
@@ -78,8 +78,8 @@ class Flatten(nn.Module):
 
 class EarlyExitAlexnet(nn.Module):
 
-	def __init__(self):
-	#def __init__(self, input_dim, device, pretrained=True):
+	#def __init__(self):
+	def __init__(self, input_dim, device, pretrained=True):
 
 		super(EarlyExitAlexnet, self).__init__()
 
@@ -114,7 +114,7 @@ class EarlyExitAlexnet(nn.Module):
 			if type(layer) == type(conv_teste):
 				n = layer.out_channels
 			if self.stage_id < len(self.position_list):
-				if i == position_list[self.stage_id]:
+				if i == self.position_list[self.stage_id]:
 					self.exits.append(self.early_exit_block(self,n))
 					self.stage_id += 1
 
@@ -125,7 +125,7 @@ class EarlyExitAlexnet(nn.Module):
 		self.classifier = backbone_model.classifier
 		self.classifier[1] = nn.Linear(9216, 4096)
 		self.classifier[4] = nn.Linear(4096, 1024)
-		self.classifier[6] = nn.Linear(1024, self.n_classes) #Nº de damdas do dataset que se quer classificar.    
+		self.classifier[6] = nn.Linear(1024, self.n_classes)		#Nº de camadas do dataset que se quer classificar.    
 		self.softmax = nn.Softmax(dim=1)
 
 
@@ -135,13 +135,13 @@ class EarlyExitAlexnet(nn.Module):
 
 		maxpool = nn.MaxPool2d(kernel_size=3)
 
-		dropout =  nn.Dropout(p=0.5, inplace=False).to(device)
+		dropout =  nn.Dropout(p=0.5, inplace=False).to(self.device)
 
-		adaptative = nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(device)     ### Faz um pooling e coloca a saída no formato definido no outpusize
+		adaptative = nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(self.device)     ### Faz um pooling e coloca a saída no formato definido no outpusize
 
 		total_neurons = 6*6*128
 
-		linear = nn.Linear(in_features=total_neurons, out_features=10, bias=True).to(device)
+		linear = nn.Linear(in_features=total_neurons, out_features=10, bias=True).to(self.device)
 
 		branch = nn.ModuleList([self.conv,nn.ReLU(inplace=True),self.maxpool, self.dropout, self.adaptative, Flatten(), self.linear])
 
@@ -172,13 +172,11 @@ class EarlyExitAlexnet(nn.Module):
 
 		confidence_bb, infered_class_bb = torch.max(self.softmax(output), 1)
 		#Confidence mede a confiança da predição e infered_calss aponta a classe inferida pela DNN
-
 		output[self.n_branchs].append= res_branch
 		confidence[self.n_branchs+1].append = confidence_branch
 		infered_class[self.n_branchs+1].append = infered_class_branch
 
 		return output, confidence, infered_class
-
 
 
 

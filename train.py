@@ -31,7 +31,7 @@ from torchvision import transforms, utils, datasets
 import tools
 import earlyExits as ee
 #from torchsummary import summary
-from temperature_scaling import ModelWithTemperature
+from temperature_scaling_gpleiss import ModelWithTemperature
 
 
 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
 	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-	epoch = 100
+	epochs = 100
 
 	## Tx de apredizado
 	lr = 0.001 ##ou 
@@ -75,17 +75,17 @@ if __name__ == '__main__':
 	## chamar a rede para treinar
 	for epc in range(epochs):
 
-	    model.train()
+		model.train()
 
-	    for images,target in tqdm(train_loader):
+		for images,target in tqdm(train_loader):
 
-	        images, target = images.to(device), target.to(device)
+			images, target = images.to(device), target.to(device)
 
 
-	scaled_model = ModelWithTemperature(model)
-	scaled_model.set_temperature(valid_loader)
+		scaled_model = ModelWithTemperature(model)
+		scaled_model.set_temperature(valid_loader)
 
 
 
 		## Treino para cada epoca
-		start_train_time = time.time()
+	start_train_time = time.time()
