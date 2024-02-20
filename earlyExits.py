@@ -31,6 +31,9 @@ from torchvision import transforms, utils, datasets
 #import tools
 #from torchsummary import summary
 
+#### Teste
+print ("deu certo")
+
 
 class EarlyExitDNN(nn.Module):
 
