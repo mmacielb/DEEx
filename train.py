@@ -53,6 +53,7 @@ if __name__ == '__main__':
 
 	bt_size = 128
 
+
 	classes_list, label_list,train_loader, valid_loader = tools.data_set(dataset,bt_size,train=True)
 
 	model = ee.EarlyExitDNN()
@@ -78,8 +79,13 @@ if __name__ == '__main__':
 		model.train()
 
 		for images,target in tqdm(train_loader):
-
 			images, target = images.to(device), target.to(device)
+
+			optimize.zero_grad()
+			output, confidence, infered_class = model(images)
+
+
+
 
 
 		scaled_model = ModelWithTemperature(model)

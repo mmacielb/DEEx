@@ -39,6 +39,7 @@ def data_set(dataset,bt_size,train):
 
 	split_ratio = 0.1
 	batch_size = batch_size
+	bt_size_test = batch_size
 
 
 	input_dim = 224
@@ -73,7 +74,7 @@ def data_set(dataset,bt_size,train):
 
 
 		else:	
-			test_set = datasets.CIFAR10(root='./data', train=False, download=True, transform=data_transform)
+			test_dataset = datasets.CIFAR10(root='./data', train=False, download=True, transform=data_transform)
 			classes_list = test_set.classes
 			label_list = list(test_set.class_to_idx.values())
 
@@ -181,24 +182,20 @@ def initialize(classes_list,model):
 	return
 
 
-def initialize_epoch(classes_list,model):
-
-
-	return
-
+def initialize_epoch(classes_list,model,epochs):
+	n_exits = model.n_branchs + 1
 
 
 
 
-
-for epc in range(epochs):
-	
-	train_acc_b1 = 0.0
-	train_acc_b2 = 0.0
-	train_acc_bb = 0.0
-	val_acc_b1 = 0.0
-	val_acc_b2 = 0.0
-	val_acc_b3 = 0.0
+#	for epc in range(epochs):
+		
+	train_acc = {i: 0.0 for i in range(1, (n_exits)+1)}
+	#train_acc_b2 = 0.0
+	#train_acc_bb = 0.0
+	val_acc = {i: 0.0 for i in range(1, (n_exits)+1)}
+	#val_acc_b2 = 0.0
+	#val_acc_b3 = 0.0
 	
 	running_loss_dict = {i: [] for i in range(1, (n_exits)+1)}
 	#running_loss = []
@@ -209,3 +206,4 @@ for epc in range(epochs):
 	val_acc_dict = {i: [] for i in range(1, (n_exits)+1)}
 	#train_acc_list = []
 
+	return
