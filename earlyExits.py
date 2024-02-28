@@ -178,6 +178,7 @@ class EarlyExitAlexnet(nn.Module):
 		infered_class[self.n_branchs+1].append = infered_class_branch
 
 		return output, confidence, infered_class
+		#return output#, confidence, infered_class
 
 
 

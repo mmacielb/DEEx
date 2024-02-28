@@ -107,12 +107,12 @@ if __name__ == '__main__':
 				with torch.no_grad():
 					# Forward pass
 					input, target = input.to(device), target.to(device)
-					output = model(input)
+					output,confidence, infered_class = model(input)
 					loss = criterion(output, target)
 
 			# Accounting
-			_, predictions = torch.topk(output, 1)
-			error = 1 - torch.eq(predictions, target).float().mean()
+			#_, predictions = torch.topk(output, 1)
+			error = 1 - torch.eq(infered_class, target).float().mean()
 			batch_time = time.time() - end
 			end = time.time()
 
