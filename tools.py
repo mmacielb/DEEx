@@ -32,7 +32,7 @@ from torchvision import transforms, utils, datasets
 # from sklearn.metrics import accuracy_score, precision_score, confusion_matrix
 
 
-def data_set(dataset,bt_size,train):
+def data_set(dataset,bt_size,input_dim,train):
 
 	mean = [0.457342265910642, 0.4387686270106377, 0.4073427106250871]
 	std = [0.26753769276329037, 0.2638145880487105, 0.2776826934044154]
@@ -42,7 +42,7 @@ def data_set(dataset,bt_size,train):
 	bt_size_test = batch_size
 
 
-	input_dim = 224
+	input_dim = input_dim
 
 	data_transform = transforms.Compose([
 	    transforms.Resize(input_dim),

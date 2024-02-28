@@ -52,11 +52,12 @@ if __name__ == '__main__':
 	dataset = 'cifar10'
 
 	bt_size = 128
+	input_dim = 224
 
 
-	classes_list, label_list,train_loader, valid_loader = tools.data_set(dataset,bt_size,train=True)
+	classes_list, label_list,train_loader, valid_loader = tools.data_set(dataset,bt_size,input_dim,train=True)
 
-	model = ee.EarlyExitDNN()
+	model = ee.EarlyExitDNN(input_dim, device, pretrained=True)
 	model = model.to(device)
 
 
@@ -74,15 +75,65 @@ if __name__ == '__main__':
 
 
 	## chamar a rede para treinar
+	def run_epoch(loader, model, criterion, optimizer, epoch=0, n_epochs=0, train=True):
+		time_meter = Meter(name='Time', cum=True)
+		loss_meter = Meter(name='Loss', cum=False)
+		error_meter = Meter(name='Error', cum=False)
+
+		if train:
+			model.train()
+			print('Training')
+		else:
+			model.eval()
+			print('Evaluating')
+
+		end = time.time()
+		for i, (input, target) in enumerate(loader):
+			if train:
+				model.zero_grad()
+				optimizer.zero_grad()
+
+				# Forward pass
+				input, target = input.to(device), target.to(device)
+				output = model(input)
+				loss = criterion(output, target)
+
+				# Backward pass
+				loss.backward()
+				optimizer.step()
+				optimizer.n_iters = optimizer.n_iters + 1 if hasattr(optimizer, 'n_iters') else 1
+
+			else:
+				with torch.no_grad():
+					# Forward pass
+					input, target = input.to(device), target.to(device)
+					output = model(input)
+					loss = criterion(output, target)
+
+			# Accounting
+			_, predictions = torch.topk(output, 1)
+			error = 1 - torch.eq(predictions, target).float().mean()
+			batch_time = time.time() - end
+			end = time.time()
+
+			# Log errors
+			time_meter.update(batch_time)
+			loss_meter.update(loss)
+			error_meter.update(error)
+			print('  '.join([
+				'%s: (Epoch %d of %d) [%04d/%04d]' % ('Train' if train else 'Eval',
+					epoch, n_epochs, i + 1, len(loader)),
+				str(time_meter),
+				str(loss_meter),
+				str(error_meter),
+			]))
+
+		return time_meter.value(), loss_meter.value(), error_meter.value()
+
+
+
 	for epc in range(epochs):
 
-		model.train()
-
-		for images,target in tqdm(train_loader):
-			images, target = images.to(device), target.to(device)
-
-			optimize.zero_grad()
-			output, confidence, infered_class = model(images)
 
 
 
