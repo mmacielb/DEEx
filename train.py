@@ -77,70 +77,12 @@ if __name__ == '__main__':
 
 
 	## chamar a rede para treinar
-	def run_epoch(loader, model, criterion, optimizer, epoch=0, n_epochs=0, train=True):
-		time_meter = tools.Meter(name='Time', cum=True)
-		loss_meter = tools.Meter(name='Loss', cum=False)
-		error_meter = tools.Meter(name='Error', cum=False)
-
-		if train:
-			model.train()
-			print('Training')
-		else:
-			model.eval()
-			print('Evaluating')
-
-		end = time.time()
-		for i, (input, target) in enumerate(loader):
-			if train:
-				model.zero_grad()
-				optimizer.zero_grad()
-
-				# Forward pass
-				input, target = input.to(device), target.to(device)
-				output,confidence, infered_class = model(input)
-				for i in n_exits:
-					loss = criterion(output[i], target)
-
-				# Backward pass
-				loss.backward()
-				optimizer.step()
-				optimizer.n_iters = optimizer.n_iters + 1 if hasattr(optimizer, 'n_iters') else 1
-
-			else:
-				with torch.no_grad():
-					# Forward pass
-					input, target = input.to(device), target.to(device)
-					output,confidence, infered_class = model(input)
-					loss = criterion(output, target)
-
-			#_, predictions = torch.topk(output, 1)
-			for i in n_exits:
-				error = 1 - torch.eq(infered_class[i], target).float().mean()
-			batch_time = time.time() - end
-			end = time.time()
-
-			# Log errors
-			time_meter.update(batch_time)
-			loss_meter.update(loss)
-			error_meter.update(error)
-			print('  '.join([
-				'%s: (Epoch %d of %d) [%04d/%04d]' % ('Train' if train else 'Eval',
-					epoch, n_epochs, i + 1, len(loader)),
-				str(time_meter),
-				str(loss_meter),
-				str(error_meter),
-			]))
-
-		return time_meter.value(), loss_meter.value(), error_meter.value()
-
-
-	def trainModel(train_loader, valid_loader,model,criterion,optimize,epochs):
-		scheduler.step()
+	def trainModel(device,train_loader, valid_loader,model,criterion,optimize,epochs):
 
 		for n_epochs in range(epochs):
 
-			train_res = run_epoch(train_loader,model,criterion,optimize,n_epochs,train=True)
-			valid_res = run_epoch(valid_loader,model,criterion,optimize,n_epochs,train=False)
+			train_res = tools.run_epoch(device,train_loader,model,criterion,optimize,n_epochs,train=True)
+			valid_res = tools.run_epoch(device,valid_loader,model,criterion,optimize,n_epochs,train=False)
 
 
 

@@ -29,7 +29,7 @@ from torchvision.utils import save_image
 from torchvision import transforms, utils, datasets
 #from torchsummary import summary
 
-# from sklearn.metrics import accuracy_score, precision_score, confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, confusion_matrix
 
 
 def data_set(dataset,bt_size,input_dim,train):
@@ -253,3 +253,68 @@ class Meter():
     def __repr__(self):
         return '\t'.join(['%s: %.5f (%.3f)' % (n, lv, v)
             for n, lv, v in zip(self.name, self._last_value, self.value())])
+	
+def run_epoch(device, loader, model, criterion, optimizer, epoch=0, n_epochs=0, train=True):
+	n_exits = model.n_branch + 1
+
+	loss = []
+	acc = []
+
+	time_meter = Meter(name='Time', cum=True)
+	loss_meter = {i:Meter(name='Loss-'+str(i), cum=False)for i in range(n_exits)}
+	acc_meter = {i:Meter(name='Acuracy-'+str(i), cum=False) for i in range(n_exits)}
+
+	if train:
+		model.train()
+		print('Training')
+	else:
+		model.eval()
+		print('Evaluating')
+
+	end = time.time()
+	for i, (input, target) in enumerate(loader):
+		if train:
+			model.zero_grad()
+			optimizer.zero_grad()
+
+			# Forward pass
+			input, target = input.to(device), target.to(device)
+			output,confidence, infered_class = model(input)
+			for i in n_exits:
+				loss.append = criterion(output[i], target)
+
+			# Backward pass
+			loss.backward()
+			optimizer.step()
+			optimizer.n_iters = optimizer.n_iters + 1 if hasattr(optimizer, 'n_iters') else 1
+
+		else:
+			with torch.no_grad():
+				# Forward pass
+				input, target = input.to(device), target.to(device)
+				output,confidence, infered_class = model(input)
+				for i in n_exits:
+					loss.append = criterion(output[i], target)
+
+
+		#_, predictions = torch.topk(output, 1)
+		for i in n_exits:
+			acc = accuracy_score(infered_class[i].cpu(),target.cpu())
+		batch_time = time.time() - end
+		end = time.time()
+
+		# Log errors
+		time_meter.update(batch_time)
+
+		for i in range(n_exits):
+			loss_meter[i].update(loss[i])
+			acc_meter[i].update(acc[i])
+		print('  '.join([
+			'%s: (Epoch %d of %d) [%04d/%04d]' % ('Train' if train else 'Eval',
+				epoch, n_epochs, i + 1, len(loader)),
+			str(time_meter),
+			str(loss_meter),
+			str(acc_meter),
+		]))
+
+	return time_meter, loss_meter, acc_meter
