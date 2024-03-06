@@ -207,3 +207,49 @@ def initialize_epoch(classes_list,model,epochs):
 	#train_acc_list = []
 
 	return
+
+class Meter():
+    """
+    A little helper class which keeps track of statistics during an epoch.
+    """
+    def __init__(self, name, cum=False):
+        """
+        name (str or iterable): name of values for the meter
+            If an iterable of size n, updates require a n-Tensor
+        cum (bool): is this meter for a cumulative value (e.g. time)
+            or for an averaged value (e.g. loss)? - default False
+        """
+        self.cum = cum
+        if type(name) == str:
+            name = (name,)
+        self.name = name
+
+        self._total = torch.zeros(len(self.name))
+        self._last_value = torch.zeros(len(self.name))
+        self._count = 0.0
+
+    def update(self, data, n=1):
+        """
+        Update the meter
+        data (Tensor, or float): update value for the meter
+            Size of data should match size of ``name'' in the initialized args
+        """
+        self._count = self._count + n
+        if torch.is_tensor(data):
+            self._last_value.copy_(data)
+        else:
+            self._last_value.fill_(data)
+        self._total.add_(self._last_value)
+
+    def value(self):
+        """
+        Returns the value of the meter
+        """
+        if self.cum:
+            return self._total
+        else:
+            return self._total / self._count
+
+    def __repr__(self):
+        return '\t'.join(['%s: %.5f (%.3f)' % (n, lv, v)
+            for n, lv, v in zip(self.name, self._last_value, self.value())])

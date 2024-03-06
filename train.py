@@ -60,6 +60,8 @@ if __name__ == '__main__':
 	model = ee.EarlyExitDNN(input_dim, device, pretrained=True)
 	model = model.to(device)
 
+	n_exits = model.n_branchs + 1
+
 
 	# Paremetros de configuracao da rede neural
 	criterion, optimize = tools.parameter(model,lr,opt)
@@ -76,9 +78,9 @@ if __name__ == '__main__':
 
 	## chamar a rede para treinar
 	def run_epoch(loader, model, criterion, optimizer, epoch=0, n_epochs=0, train=True):
-		time_meter = Meter(name='Time', cum=True)
-		loss_meter = Meter(name='Loss', cum=False)
-		error_meter = Meter(name='Error', cum=False)
+		time_meter = tools.Meter(name='Time', cum=True)
+		loss_meter = tools.Meter(name='Loss', cum=False)
+		error_meter = tools.Meter(name='Error', cum=False)
 
 		if train:
 			model.train()
@@ -95,8 +97,9 @@ if __name__ == '__main__':
 
 				# Forward pass
 				input, target = input.to(device), target.to(device)
-				output = model(input)
-				loss = criterion(output, target)
+				output,confidence, infered_class = model(input)
+				for i in n_exits:
+					loss = criterion(output[i], target)
 
 				# Backward pass
 				loss.backward()
@@ -110,9 +113,9 @@ if __name__ == '__main__':
 					output,confidence, infered_class = model(input)
 					loss = criterion(output, target)
 
-			# Accounting
 			#_, predictions = torch.topk(output, 1)
-			error = 1 - torch.eq(infered_class, target).float().mean()
+			for i in n_exits:
+				error = 1 - torch.eq(infered_class[i], target).float().mean()
 			batch_time = time.time() - end
 			end = time.time()
 
@@ -131,18 +134,25 @@ if __name__ == '__main__':
 		return time_meter.value(), loss_meter.value(), error_meter.value()
 
 
+	def trainModel(train_loader, valid_loader,model,criterion,optimize,epochs):
+		scheduler.step()
 
-	for epc in range(epochs):
+		for n_epochs in range(epochs):
+
+			train_res = run_epoch(train_loader,model,criterion,optimize,n_epochs,train=True)
+			valid_res = run_epoch(valid_loader,model,criterion,optimize,n_epochs,train=False)
 
 
 
 
 
 
-		scaled_model = ModelWithTemperature(model)
-		scaled_model.set_temperature(valid_loader)
+
+
+		#scaled_model = ModelWithTemperature(model)
+		#scaled_model.set_temperature(valid_loader)
 
 
 
 		## Treino para cada epoca
-	start_train_time = time.time()
+		#start_train_time = time.time()
