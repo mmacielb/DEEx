@@ -182,31 +182,22 @@ def initialize(classes_list,model):
 	return
 
 
-def initialize_epoch(classes_list,model,epochs):
+def initialize_train(model):
 	n_exits = model.n_branchs + 1
-
-
-
-
-#	for epc in range(epochs):
-		
-	train_acc = {i: 0.0 for i in range(1, (n_exits)+1)}
-	#train_acc_b2 = 0.0
-	#train_acc_bb = 0.0
-	val_acc = {i: 0.0 for i in range(1, (n_exits)+1)}
-	#val_acc_b2 = 0.0
-	#val_acc_b3 = 0.0
 	
-	running_loss_dict = {i: [] for i in range(1, (n_exits)+1)}
+	train_time = []
+	valid_time = []
+
+	train_loss_dict = {i: [] for i in range(1, (n_exits)+1)}
 	#running_loss = []
 	train_acc_dict = {i: [] for i in range(1, (n_exits)+1)}
 	#train_acc_list = []
-	val_loss_dict = {i: [] for i in range(1, (n_exits)+1)}
+	valid_loss_dict = {i: [] for i in range(1, (n_exits)+1)}
 	#running_loss = []
-	val_acc_dict = {i: [] for i in range(1, (n_exits)+1)}
+	valid_acc_dict = {i: [] for i in range(1, (n_exits)+1)}
 	#train_acc_list = []
 
-	return
+	return train_time, train_loss_dict, train_acc_dict, valid_time, valid_loss_dict, valid_acc_dict
 
 class Meter():
     """
@@ -255,14 +246,19 @@ class Meter():
             for n, lv, v in zip(self.name, self._last_value, self.value())])
 	
 def run_epoch(device, loader, model, criterion, optimizer, epoch=0, n_epochs=0, train=True):
+	'''
+	Inicializa as variaveis locais
+	realiza a rodada de uma época
+	retorna o tempo (time.value()) e os valores de loss e acuracia (met.[i].value()) da rodada
+	'''
 	n_exits = model.n_branch + 1
 
 	loss = []
 	acc = []
 
 	time_meter = Meter(name='Time', cum=True)
-	loss_meter = {i:Meter(name='Loss-'+str(i), cum=False)for i in range(n_exits)}
-	acc_meter = {i:Meter(name='Acuracy-'+str(i), cum=False) for i in range(n_exits)}
+	loss_meter = {i:Meter(name='Loss-'+str(i), cum=False)for i in range(1, (n_exits)+1)}
+	acc_meter = {i:Meter(name='Acuracy-'+str(i), cum=False) for i in range(1, (n_exits)+1)}
 
 	if train:
 		model.train()
@@ -298,15 +294,15 @@ def run_epoch(device, loader, model, criterion, optimizer, epoch=0, n_epochs=0, 
 
 
 		#_, predictions = torch.topk(output, 1)
-		for i in n_exits:
-			acc = accuracy_score(infered_class[i].cpu(),target.cpu())
+		for i in range(1, (n_exits)+1):
+			acc.append = accuracy_score(infered_class[i].cpu(),target.cpu())
 		batch_time = time.time() - end
 		end = time.time()
 
 		# Log errors
 		time_meter.update(batch_time)
 
-		for i in range(n_exits):
+		for i in range(1, (n_exits)+1):
 			loss_meter[i].update(loss[i])
 			acc_meter[i].update(acc[i])
 		print('  '.join([
@@ -317,4 +313,4 @@ def run_epoch(device, loader, model, criterion, optimizer, epoch=0, n_epochs=0, 
 			str(acc_meter),
 		]))
 
-	return time_meter, loss_meter, acc_meter
+	return time_meter, loss_meter, acc_meter, confidence

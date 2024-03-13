@@ -34,6 +34,28 @@ import earlyExits as ee
 from temperature_scaling_gpleiss import ModelWithTemperature
 
 
+## chamar a rede para treinar
+def trainModel(device,train_loader, valid_loader,model,criterion,optimize,epochs):
+
+	train_time, train_loss_dict, train_acc_dict, valid_time, valid_loss_dict, valid_acc_dict = tools.initialize_train(model)
+
+	for n_epochs in range(epochs):
+
+		train_res = tools.run_epoch(device,train_loader,model,criterion,optimize,n_epochs,train=True)
+		valid_res = tools.run_epoch(device,valid_loader,model,criterion,optimize,n_epochs,train=False)
+
+		train_time.append(train_res[0].value())
+		valid_time.append(valid_res[0].value())
+
+		for i in range(1, (n_exits)+1):
+			train_loss_dict[i].append(train_res[1].value())
+			train_acc_dict[i].append(train_res[2].value())
+			valid_loss_dict[i].append(valid_res[1].value())
+			valid_acc_dict[i].append(valid_res[2].value())
+	
+	return train_time, train_loss_dict, train_acc_dict, valid_time, valid_loss_dict, valid_acc_dict
+
+
 
 if __name__ == '__main__':
 
@@ -71,18 +93,15 @@ if __name__ == '__main__':
 
 	# Preparar o que eu quero de resutados
 
+	train_time, train_loss_dict, train_acc_dict, valid_time, valid_loss_dict, valid_acc_dict = trainModel(device,train_loader, valid_loader,model,criterion,optimize,epochs)
 
 
 
 
 
-	## chamar a rede para treinar
-	def trainModel(device,train_loader, valid_loader,model,criterion,optimize,epochs):
 
-		for n_epochs in range(epochs):
 
-			train_res = tools.run_epoch(device,train_loader,model,criterion,optimize,n_epochs,train=True)
-			valid_res = tools.run_epoch(device,valid_loader,model,criterion,optimize,n_epochs,train=False)
+
 
 
 
@@ -93,7 +112,6 @@ if __name__ == '__main__':
 
 		#scaled_model = ModelWithTemperature(model)
 		#scaled_model.set_temperature(valid_loader)
-
 
 
 		## Treino para cada epoca
