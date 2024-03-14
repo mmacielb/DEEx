@@ -61,32 +61,42 @@ if __name__ == '__main__':
 
 	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-	epochs = 100
+	epochs = 1
 
 	## Tx de apredizado
-	lr = 0.001 ##ou 
+	_lr = 0.001 ##ou 
 	#lr=1.5e-4
 
 	#Otimazador
-	opt = 'SGD'
+	_opt = 'SGD'
 	# opt = 'adam'
 
 	dataset = 'cifar10'
 
 	bt_size = 128
 	input_dim = 224
+	n_classes = 10
+
+	n_branchs = 2
+	position_list = [2,5]
+
+	modelName = "alexnet"
+
+
+
 
 
 	classes_list, label_list,train_loader, valid_loader = tools.data_set(dataset,bt_size,input_dim,train=True)
 
-	model = ee.EarlyExitDNN(input_dim, device, pretrained=True)
+	#model = ee.EarlyExitDNN(input_dim, device, pretrained=True)
+	model = ee.EarlyExitDNN(modelName, n_branchs, position_list, n_classes, input_dim, device)
 	model = model.to(device)
 
 	n_exits = model.n_branchs + 1
 
 
 	# Paremetros de configuracao da rede neural
-	criterion, optimize = tools.parameter(model,lr,opt)
+	criterion, optimize = tools.parameter(model,_lr,_opt)
 	criterion = criterion.to(device)
 	softmax = nn.Softmax(dim=1)
 

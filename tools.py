@@ -38,8 +38,8 @@ def data_set(dataset,bt_size,input_dim,train):
 	std = [0.26753769276329037, 0.2638145880487105, 0.2776826934044154]
 
 	split_ratio = 0.1
-	batch_size = batch_size
-	bt_size_test = batch_size
+	batch_size = bt_size
+	bt_size_test = bt_size
 
 
 	input_dim = input_dim
@@ -136,23 +136,24 @@ def data_set(dataset,bt_size,input_dim,train):
 
 
 
-def parameter(model,lr,opt):
+def parameter(model,_lr,_opt):
 	
 	#lr=0.001 ##ou 
 	#lr=1.5e-4
-
-
 	#criterion = nn.NLLLoss()
-	criterion = nn.CrossEntropyLoss()
-
 	#opt = 'SGD'
 	# opt = 'adam'
 
+	criterion = nn.CrossEntropyLoss()
+	lr = _lr
+	opt = _opt
+
+
 	if opt == 'adam':
-		optimize = optim.Adam(model.parameters(),lr = lr)
+		optimize = optim.Adam(model.parameters(),lr = _lr)
 
 	else:
-		optimize = optim.SGD(model.parameters(),lr = lr,momentum=0.9)
+		optimize = optim.SGD(model.parameters(),lr = _lr,momentum=0.9)
 
 	return criterion, optimize
 

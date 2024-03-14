@@ -36,7 +36,7 @@ from torchvision import transforms, utils, datasets
 class EarlyExitDNN(nn.Module):
 
 	#def __init__(self, modelName, pretrained=True):
-	def __init__(self, modelName, n_branchs, position_list, n_classes, input_dim, device, pretrained=True):
+	def __init__(self, modelName, n_branchs, position_list, n_classes, input_dim, device):
 
 		super(EarlyExitDNN, self).__init__()
 
@@ -46,7 +46,6 @@ class EarlyExitDNN(nn.Module):
 		self.n_classes = n_classes
 		self.input_dim = input_dim
 		self.device = device
-		self.pretrained = pretrained
 
 		# build_early_exit_dnn = self.dnn_architecture_model()
 		# build_early_exit_dnn()
@@ -80,7 +79,7 @@ class Flatten(nn.Module):
 class EarlyExitAlexnet(nn.Module):
 
 	#def __init__(self):
-	def __init__(self, input_dim, device, pretrained=True):
+	def __init__(self, input_dim, device):
 
 		super(EarlyExitAlexnet, self).__init__()
 
@@ -89,7 +88,7 @@ class EarlyExitAlexnet(nn.Module):
 		self.n_classes = 10
 		self.input_dim = input_dim
 		self.device = device
-		self.pretrained = pretrained
+		self.weights = "AlexNet_Weights"
 
 		# build_early_exit_dnn = self.dnn_architecture_model()
 		# build_early_exit_dnn()
@@ -101,7 +100,7 @@ class EarlyExitAlexnet(nn.Module):
 		self.stage_id = 0
 
 		# Loads the backbone model. In other words, Alexnet architecture provided by Pytorch.
-		backbone_model = models.alexnet(self.pretrained)
+		backbone_model = models.alexnet(self.weights)
 
 		# print(backbone_model)
 
