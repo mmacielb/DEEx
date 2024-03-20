@@ -170,11 +170,11 @@ class EarlyExitAlexnet(nn.Module):
 
 		output_bb = self.classifier(res)
 
-		confidence_bb, infered_class_bb = torch.max(self.softmax(output), 1)
+		confidence_bb, infered_class_bb = torch.max(self.softmax(output_bb), 1)
 		#Confidence mede a confiança da predição e infered_calss aponta a classe inferida pela DNN
-		output[self.n_branchs].append= res_branch
-		confidence[self.n_branchs+1].append = confidence_branch
-		infered_class[self.n_branchs+1].append = infered_class_branch
+		output[self.n_branchs+1].append= output_bb
+		confidence[self.n_branchs+1].append = confidence_bb
+		infered_class[self.n_branchs+1].append = infered_class_bb
 
 		return output, confidence, infered_class
 		#return output#, confidence, infered_class
@@ -199,27 +199,6 @@ class EarlyExitAlexnet(nn.Module):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # backbone_model = models.mobilenet_v2(pretrained = True)
-
-# print(len(list(backbone_model.features.children())))
-# print(backbone_model)
-
-backbone_model = models.alexnet(pretrained = True)
-
 # print(len(list(backbone_model.children())))
-print(backbone_model)
+#print(backbone_model)

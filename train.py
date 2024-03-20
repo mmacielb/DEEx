@@ -6,6 +6,7 @@ import os, sys, time, math, argparse
 import functools
 from PIL import Image
 from itertools import product
+import warnings
 
 import torch, random
 import torchvision
@@ -59,6 +60,8 @@ def trainModel(device,train_loader, valid_loader,model,criterion,optimize,epochs
 
 if __name__ == '__main__':
 
+	#warnings.filterwarnings("ignore", category=UserWarning) 
+	
 	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 	epochs = 1

@@ -154,8 +154,12 @@ def parameter(model,lr,opt):
 
 	else:
 		print(list(model.parameters()))
-		quit()
+		#quit()
 		optimizer = optim.SGD(model.parameters(),lr = lr,momentum=0.9)
+
+		optimizer = optim.Adam([{'params': model.stages.parameters(), 'lr': lr}, 
+		{'params': model.exits.parameters(), 'lr': lr},
+		{'params': model.classifier.parameters(), 'lr': lr}], momentum=0.9) #weight_decay=args.weight_decay)
 
 	return criterion, optimizer
 
