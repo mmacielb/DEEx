@@ -47,8 +47,17 @@ class EarlyExitDNN(nn.Module):
 		self.input_dim = input_dim
 		self.device = device
 
-		# build_early_exit_dnn = self.dnn_architecture_model()
-		# build_early_exit_dnn()
+		self.stages = nn.ModuleList()
+		self.exits = nn.ModuleList()
+		self.layers = nn.ModuleList()
+		self.classifier = nn.ModuleList()
+
+		print('device-',self.device)
+		print()
+
+		build_early_exit_dnn = self.dnn_architecture_model()
+		build_early_exit_dnn()
+
 
 
 	def dnn_architecture_model(self):
@@ -57,7 +66,7 @@ class EarlyExitDNN(nn.Module):
 		This method selects the backbone to insert the early exits.
 		"""
 
-		architecture_dnn_model_dict = {"alexnet": EarlyExitAlexnet(self)} #,
+		architecture_dnn_model_dict = {"alexnet": EarlyExitAlexnet(self.input_dim, self.device)} #,
 									   # "mobilenet": self.early_exit_mobilenet,
 									   # "efficientnet_b1": self.early_exit_efficientnet_b1}
 
@@ -99,8 +108,10 @@ class EarlyExitAlexnet(nn.Module):
 		self.cost = []
 		self.stage_id = 0
 
+		dir()
+
 		# Loads the backbone model. In other words, Alexnet architecture provided by Pytorch.
-		backbone_model = models.alexnet(weights=models.AlexNet_Weights.DEFAULT)
+		backbone_model = models.alexnet(weights=models.AlexNet_Weights.DEFAULT).to(self.device)
 
 		# print(backbone_model)
 

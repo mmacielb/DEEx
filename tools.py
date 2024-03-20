@@ -153,11 +153,11 @@ def parameter(model,lr,opt):
 		optimizer = optim.Adam(model.parameters(),lr = lr)
 
 	else:
-		print(list(model.parameters()))
+		#print(list(model.parameters()))
 		#quit()
-		optimizer = optim.SGD(model.parameters(),lr = lr,momentum=0.9)
+		#optimizer = optim.SGD(model.parameters(),lr = lr,momentum=0.9)
 
-		optimizer = optim.Adam([{'params': model.stages.parameters(), 'lr': lr}, 
+		optimizer = optim.SGD([{'params': model.stages.parameters(), 'lr': lr}, 
 		{'params': model.exits.parameters(), 'lr': lr},
 		{'params': model.classifier.parameters(), 'lr': lr}], momentum=0.9) #weight_decay=args.weight_decay)
 
@@ -258,7 +258,7 @@ def run_epoch(device, loader, model, criterion, optimizer, epoch=0, n_epochs=0, 
 	realiza a rodada de uma época
 	retorna o tempo (time.value()) e os valores de loss e acuracia (met.[i].value()) da rodada
 	'''
-	n_exits = model.n_branch + 1
+	n_exits = model.n_branchs + 1
 
 	loss = []
 	acc = []
