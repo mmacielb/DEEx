@@ -88,7 +88,7 @@ class EarlyExitAlexnet(nn.Module):
 		self.n_classes = 10
 		self.input_dim = input_dim
 		self.device = device
-		self.weights = "AlexNet_Weights"
+		#self.weights = "AlexNet_Weights"
 
 		# build_early_exit_dnn = self.dnn_architecture_model()
 		# build_early_exit_dnn()
@@ -100,7 +100,7 @@ class EarlyExitAlexnet(nn.Module):
 		self.stage_id = 0
 
 		# Loads the backbone model. In other words, Alexnet architecture provided by Pytorch.
-		backbone_model = models.alexnet(self.weights)
+		backbone_model = models.alexnet(weights=models.AlexNet_Weights.DEFAULT)
 
 		# print(backbone_model)
 

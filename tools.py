@@ -136,7 +136,7 @@ def data_set(dataset,bt_size,input_dim,train):
 
 
 
-def parameter(model,_lr,_opt):
+def parameter(model,lr,opt):
 	
 	#lr=0.001 ##ou 
 	#lr=1.5e-4
@@ -145,17 +145,19 @@ def parameter(model,_lr,_opt):
 	# opt = 'adam'
 
 	criterion = nn.CrossEntropyLoss()
-	lr = _lr
-	opt = _opt
+	lr = lr
+	opt = opt
 
 
 	if opt == 'adam':
-		optimize = optim.Adam(model.parameters(),lr = _lr)
+		optimizer = optim.Adam(model.parameters(),lr = lr)
 
 	else:
-		optimize = optim.SGD(model.parameters(),lr = _lr,momentum=0.9)
+		print(list(model.parameters()))
+		quit()
+		optimizer = optim.SGD(model.parameters(),lr = lr,momentum=0.9)
 
-	return criterion, optimize
+	return criterion, optimizer
 
 def initialize(classes_list,model):
 

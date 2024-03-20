@@ -64,11 +64,11 @@ if __name__ == '__main__':
 	epochs = 1
 
 	## Tx de apredizado
-	_lr = 0.001 ##ou 
+	lr = 0.001 ##ou 
 	#lr=1.5e-4
 
 	#Otimazador
-	_opt = 'SGD'
+	opt = 'SGD'
 	# opt = 'adam'
 
 	dataset = 'cifar10'
@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
 
 	# Paremetros de configuracao da rede neural
-	criterion, optimize = tools.parameter(model,_lr,_opt)
+	criterion, optimize = tools.parameter(model,lr,opt)
 	criterion = criterion.to(device)
 	softmax = nn.Softmax(dim=1)
 
