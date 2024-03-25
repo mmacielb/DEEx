@@ -54,7 +54,7 @@ def data_set(dataset,bt_size,input_dim,train):
 
 	if dataset == 'cifar10':
 		if train:
-			train_set = datasets.CIFAR10(root='./data', train=True, download=True, transform=data_transform)
+			train_set = datasets.CIFAR10(root='../data', train=True, download=True, transform=data_transform)
 			classes_list = train_set.classes
 			label_list = list(train_set.class_to_idx.values())
 		
@@ -74,7 +74,7 @@ def data_set(dataset,bt_size,input_dim,train):
 
 
 		else:	
-			test_dataset = datasets.CIFAR10(root='./data', train=False, download=True, transform=data_transform)
+			test_dataset = datasets.CIFAR10(root='../data', train=False, download=True, transform=data_transform)
 			classes_list = test_set.classes
 			label_list = list(test_set.class_to_idx.values())
 

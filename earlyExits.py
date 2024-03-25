@@ -52,12 +52,12 @@ class EarlyExitDNN(nn.Module):
 		self.layers = nn.ModuleList()
 		self.classifier = nn.ModuleList()
 
-		print('device-',self.device)
-		print()
-
+		#print('device-',self.device)
+		
 		build_early_exit_dnn = self.dnn_architecture_model()
 		build_early_exit_dnn()
-
+		print('build',build_early_exit_dnn())
+		quit()
 
 
 	def dnn_architecture_model(self):
@@ -71,7 +71,7 @@ class EarlyExitDNN(nn.Module):
 									   # "efficientnet_b1": self.early_exit_efficientnet_b1}
 
 		# self.pool_size = 7 if (self.model_name == "vgg16") else 1   				#### ver pq 7 ou 1
-		# return architecture_dnn_model_dict.get(self.model_name, self.invalid_model)
+		return architecture_dnn_model_dict.get(self.modelName)#, self.invalid_model)
 
 
 
@@ -80,7 +80,6 @@ class Flatten(nn.Module):
 		super(Flatten, self).__init__()
 	
 	def forward(self, x):
-		# Do your print / debug stuff here
 		x = x.view(x.size(0), -1)
 		return x
 
@@ -108,8 +107,6 @@ class EarlyExitAlexnet(nn.Module):
 		self.cost = []
 		self.stage_id = 0
 
-		dir()
-
 		# Loads the backbone model. In other words, Alexnet architecture provided by Pytorch.
 		backbone_model = models.alexnet(weights=models.AlexNet_Weights.DEFAULT).to(self.device)
 
@@ -126,7 +123,8 @@ class EarlyExitAlexnet(nn.Module):
 				n = layer.out_channels
 			if self.stage_id < len(self.position_list):
 				if i == self.position_list[self.stage_id]:
-					self.exits.append(self.early_exit_block(self,n))
+					#self.exits.append(self.early_exit_block(self,n))
+					self.exits.append(self.early_exit_block(n))
 					self.stage_id += 1
 
 		self.layers.append(nn.AdaptiveAvgPool2d(output_size=(6, 6)))				   ## coloca a saída no formato definido no outpusize. Esta fora do features e do classifier da backbone 
@@ -154,7 +152,8 @@ class EarlyExitAlexnet(nn.Module):
 
 		linear = nn.Linear(in_features=total_neurons, out_features=10, bias=True).to(self.device)
 
-		branch = nn.ModuleList([self.conv,nn.ReLU(inplace=True),self.maxpool, self.dropout, self.adaptative, Flatten(), self.linear])
+		#branch = nn.ModuleList([self.conv,nn.ReLU(inplace=True),self.maxpool, self.dropout, self.adaptative, Flatten(), self.linear])
+		branch = nn.ModuleList([conv,nn.ReLU(inplace=True),maxpool, dropout, adaptative, Flatten(512), linear])
 
 		return branch
 

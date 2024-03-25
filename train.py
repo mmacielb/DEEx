@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 #import matplotlib.pyplot as plt
-#import os, cv2, sys, time, math
+#import cv2
 import os, sys, time, math, argparse
 import functools
 from PIL import Image
@@ -61,7 +61,9 @@ def trainModel(device,train_loader, valid_loader,model,criterion,optimize,epochs
 if __name__ == '__main__':
 
 	#warnings.filterwarnings("ignore", category=UserWarning) 
-	
+	#path_data = '../data'
+	sys.dont_write_bytecode = True
+
 	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 	epochs = 1
@@ -85,15 +87,12 @@ if __name__ == '__main__':
 
 	modelName = "alexnet"
 
-
-
-
-
 	classes_list, label_list,train_loader, valid_loader = tools.data_set(dataset,bt_size,input_dim,train=True)
 
 	#model = ee.EarlyExitDNN(input_dim, device, pretrained=True)
 	model = ee.EarlyExitDNN(modelName, n_branchs, position_list, n_classes, input_dim, device)
 	model = model.to(device)
+	quit()
 
 	n_exits = model.n_branchs + 1
 
