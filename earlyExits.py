@@ -31,6 +31,36 @@ from torchvision import transforms, utils, datasets
 #import tools
 #from torchsummary import summary
 
+class EE_block(nn.Module):
+	def __init__(self,input_shape,device):
+		super(EE_block, self).__init__()
+
+		self.input_shape = input_shape
+		self.total_neurons = 6*6*128
+
+
+		self.layers = nn.ModuleList()
+		self.layers.append(nn.Conv2d(self.input_shape, 32, kernel_size=3, stride=1, padding=1))
+		self.layers.append(nn.MaxPool2d(kernel_size=3))
+		self.layers.append(nn.Dropout(p=0.5, inplace=False).to(device))
+		self.layers.append(nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(device))
+		self.layers.append(nn.Linear(in_features=self.total_neurons, out_features=10, bias=True).to(device))
+
+		# self.conv = nn.Conv2d(self.input_shape, 32, kernel_size=3, stride=1, padding=1)
+		# self.maxpool = nn.MaxPool2d(kernel_size=3)
+		# self.dropout =  nn.Dropout(p=0.5, inplace=False).to(self.device)
+		# self.adaptative = nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(self.device)     ### Faz um pooling e coloca a saída no formato definido no outpusize
+		# self.total_neurons = 6*6*128
+		# self.linear = nn.Linear(in_features=self.total_neurons, out_features=10, bias=True).to(self.device)
+
+
+	def forward(self, ent_bl):
+		#branch = nn.ModuleList([self.conv,nn.ReLU(inplace=True),self.maxpool, self.dropout, self.adaptative, Flatten(), self.linear])
+		for layer in self.layers:
+			x = layer(ent_bl)
+		x = x.view(x.size(0), -1)
+		output = self.classifier(x)
+		return output
 
 
 class EarlyExitDNN(nn.Module):
@@ -83,30 +113,6 @@ class Flatten(nn.Module):
 		x = x.view(x.size(0), -1)
 		return x
 
-class EE_block(self,res):
-	def __init__(self):
-		super(EE_block, self).__init__()
-
-
-		self.conv = nn.Conv2d(res, 32, kernel_size=3, stride=1, padding=1)
-
-		self.maxpool = nn.MaxPool2d(kernel_size=3)
-
-		self.dropout =  nn.Dropout(p=0.5, inplace=False).to(self.device)
-
-		self.adaptative = nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(self.device)     ### Faz um pooling e coloca a saída no formato definido no outpusize
-
-		self.total_neurons = 6*6*128
-
-		self.linear = nn.Linear(in_features=self.total_neurons, out_features=10, bias=True).to(self.device)
-
-	def forward(self, )
-		#branch = nn.ModuleList([self.conv,nn.ReLU(inplace=True),self.maxpool, self.dropout, self.adaptative, Flatten(), self.linear])
-		branch = nn.ModuleList([conv,nn.ReLU(inplace=True),maxpool, dropout, adaptative, Flatten(), linear])
-
-		return branch
-
-
 class EarlyExitAlexnet(nn.Module):
 
 	#def __init__(self):
@@ -143,11 +149,11 @@ class EarlyExitAlexnet(nn.Module):
 
 		for i, layer in enumerate(backbone_model.features):
 			if type(layer) == type(conv_teste):
-				n = layer.out_channels
+				self.input_shape = layer.out_channels
 			if self.stage_id < len(self.position_list):
 				if i == self.position_list[self.stage_id]:
 					#self.exits.append(self.early_exit_block(self,n))
-					self.exits.append(self.early_exit_block(n))
+					self.exits.append(EE_block(self.input_shape,self.device))
 					self.stage_id += 1
 
 		self.layers.append(nn.AdaptiveAvgPool2d(output_size=(6, 6)))				   ## coloca a saída no formato definido no outpusize. Esta fora do features e do classifier da backbone 
@@ -180,8 +186,6 @@ class EarlyExitAlexnet(nn.Module):
 
 		return branch
 
-	# def flatten(self,input):
-	# 	return input.view(input.shape[0],-1)
 
 
 	def forward(self,lala):
@@ -194,7 +198,8 @@ class EarlyExitAlexnet(nn.Module):
 			# quit()
 
 			res = self.stages[i](lala)
-			res_branch = self.exits[i](res)
+			# res_branch = self.exits[i](res)
+			res_branch = stage(res)
 			confidence_branch, infered_class_branch = torch.max(self.softmax(res_branch), 1)
 			output[i].append= res_branch
 			confidence[i].append = confidence_branch
