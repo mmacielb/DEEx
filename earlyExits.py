@@ -86,7 +86,7 @@ class EarlyExitDNN(nn.Module):
 		
 		build_early_exit_dnn = self.dnn_architecture_model()
 		build_early_exit_dnn()
-		print('build',build_early_exit_dnn())
+		print('build',build_early_exit_dnn)
 		quit()
 
 
