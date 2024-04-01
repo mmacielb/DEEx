@@ -83,28 +83,28 @@ class Flatten(nn.Module):
 		x = x.view(x.size(0), -1)
 		return x
 
-# class EE_block(self,n):
-# 	def __init__(self):
-# 		super(EE_block, self).__init__()
+class EE_block(self,res):
+	def __init__(self):
+		super(EE_block, self).__init__()
 
 
-	# 	self.conv = nn.Conv2d(n, 32, kernel_size=3, stride=1, padding=1)
+		self.conv = nn.Conv2d(res, 32, kernel_size=3, stride=1, padding=1)
 
-	# 	self.maxpool = nn.MaxPool2d(kernel_size=3)
+		self.maxpool = nn.MaxPool2d(kernel_size=3)
 
-	# 	self.dropout =  nn.Dropout(p=0.5, inplace=False).to(self.device)
+		self.dropout =  nn.Dropout(p=0.5, inplace=False).to(self.device)
 
-	# 	self.adaptative = nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(self.device)     ### Faz um pooling e coloca a saída no formato definido no outpusize
+		self.adaptative = nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(self.device)     ### Faz um pooling e coloca a saída no formato definido no outpusize
 
-	# 	self.total_neurons = 6*6*128
+		self.total_neurons = 6*6*128
 
-	# 	self.linear = nn.Linear(in_features=total_neurons, out_features=10, bias=True).to(self.device)
+		self.linear = nn.Linear(in_features=self.total_neurons, out_features=10, bias=True).to(self.device)
 
-	# def forward(self, )
-	# 	#branch = nn.ModuleList([self.conv,nn.ReLU(inplace=True),self.maxpool, self.dropout, self.adaptative, Flatten(), self.linear])
-	# 	branch = nn.ModuleList([conv,nn.ReLU(inplace=True),maxpool, dropout, adaptative, Flatten(), linear])
+	def forward(self, )
+		#branch = nn.ModuleList([self.conv,nn.ReLU(inplace=True),self.maxpool, self.dropout, self.adaptative, Flatten(), self.linear])
+		branch = nn.ModuleList([conv,nn.ReLU(inplace=True),maxpool, dropout, adaptative, Flatten(), linear])
 
-	# 	return branch
+		return branch
 
 
 class EarlyExitAlexnet(nn.Module):
@@ -184,16 +184,16 @@ class EarlyExitAlexnet(nn.Module):
 	# 	return input.view(input.shape[0],-1)
 
 
-	def forward(self,x):
+	def forward(self,lala):
 		output = {i:[] for i in range(self.n_branchs+1)}
 		confidence = {i:[] for i in range(self.n_branchs+1)}
 		infered_class = {i:[] for i in range(self.n_branchs+1)}
 
 		for i, stage in enumerate(self.exits):
-			print(i,stage)
-			quit()
+			# print(i,stage)
+			# quit()
 
-			res = self.stages[i](x)
+			res = self.stages[i](lala)
 			res_branch = self.exits[i](res)
 			confidence_branch, infered_class_branch = torch.max(self.softmax(res_branch), 1)
 			output[i].append= res_branch
