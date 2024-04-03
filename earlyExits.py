@@ -85,7 +85,7 @@ class EarlyExitDNN(nn.Module):
 		#print('device-',self.device)
 		
 		build_early_exit_dnn = self.dnn_architecture_model()
-		build_early_exit_dnn()
+		# build_early_exit_dnn()
 		print('build',build_early_exit_dnn)
 		quit()
 
@@ -138,6 +138,9 @@ class EarlyExitAlexnet(nn.Module):
 
 		# Loads the backbone model. In other words, Alexnet architecture provided by Pytorch.
 		backbone_model = models.alexnet(weights=models.AlexNet_Weights.DEFAULT).to(self.device)
+		# print('bb')
+		# print(backbone_model)
+		# print('--- --- ---')
 
 		# print(backbone_model)
 
@@ -148,16 +151,22 @@ class EarlyExitAlexnet(nn.Module):
 		conv_teste = nn.Conv2d(16, 33, 3, stride=2)
 
 		for i, layer in enumerate(backbone_model.features):
+			self.layers.append(layer)
 			if type(layer) == type(conv_teste):
 				self.input_shape = layer.out_channels
+				# print('SHAPE',self.input_shape)
+				# quit()
 			if self.stage_id < len(self.position_list):
+				print('ENTREI 1',self.stage_id)
 				if i == self.position_list[self.stage_id]:
+					print('ENTREI 2')
 					#self.exits.append(self.early_exit_block(self,n))
 					self.exits.append(EE_block(self.input_shape,self.device))
 					self.stage_id += 1
 
 		self.layers.append(nn.AdaptiveAvgPool2d(output_size=(6, 6)))				   ## coloca a saída no formato definido no outpusize. Esta fora do features e do classifier da backbone 
 		self.stages.append(nn.Sequential(*self.layers))
+		print('AAAAAAAAAA --\n',self.stages)
 
 		#Aqui a gente adiciona as camadas neurais que vão classificar, a partir dos atributos extraídos anteriormente.
 		self.classifier = backbone_model.classifier
@@ -165,6 +174,10 @@ class EarlyExitAlexnet(nn.Module):
 		self.classifier[4] = nn.Linear(4096, 1024)
 		self.classifier[6] = nn.Linear(1024, self.n_classes)		#Nº de camadas do dataset que se quer classificar.    
 		self.softmax = nn.Softmax(dim=1)
+
+		for i, stage in enumerate(self.exits):
+			print('----',self.stages[i])
+		quit()
 
 
 	def early_exit_block(self,n):
@@ -194,8 +207,8 @@ class EarlyExitAlexnet(nn.Module):
 		infered_class = {i:[] for i in range(self.n_branchs+1)}
 
 		for i, stage in enumerate(self.exits):
-			# print(i,stage)
-			# quit()
+			print('----',i,stage)
+			quit()
 
 			res = self.stages[i](lala)
 			# res_branch = self.exits[i](res)
