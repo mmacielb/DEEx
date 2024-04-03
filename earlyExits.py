@@ -86,7 +86,7 @@ class EarlyExitDNN(nn.Module):
 		
 		build_early_exit_dnn = self.dnn_architecture_model()
 		# build_early_exit_dnn()
-		print('build',build_early_exit_dnn)
+		# print('build',build_early_exit_dnn)
 		quit()
 
 
@@ -133,7 +133,7 @@ class EarlyExitAlexnet(nn.Module):
 		self.stages = nn.ModuleList()
 		self.exits = nn.ModuleList()
 		self.layers = nn.ModuleList()
-		self.cost = []
+		# self.cost = []
 		self.stage_id = 0
 
 		# Loads the backbone model. In other words, Alexnet architecture provided by Pytorch.
@@ -157,16 +157,22 @@ class EarlyExitAlexnet(nn.Module):
 				# print('SHAPE',self.input_shape)
 				# quit()
 			if self.stage_id < len(self.position_list):
-				print('ENTREI 1',self.stage_id)
+				# print('ENTREI 1',self.stage_id)
 				if i == self.position_list[self.stage_id]:
-					print('ENTREI 2')
+					# print('ENTREI 2  --  ',type(layer))
 					#self.exits.append(self.early_exit_block(self,n))
+					self.stages.append(nn.Sequential(*self.layers))
 					self.exits.append(EE_block(self.input_shape,self.device))
+					self.layers = nn.ModuleList()
 					self.stage_id += 1
+
+		# print('AAAAAAAAAA --\n',self.stages)
+		# print('AAAAAAAAAA --\n',*self.stages)
+		# quit()
+		
 
 		self.layers.append(nn.AdaptiveAvgPool2d(output_size=(6, 6)))				   ## coloca a saída no formato definido no outpusize. Esta fora do features e do classifier da backbone 
 		self.stages.append(nn.Sequential(*self.layers))
-		print('AAAAAAAAAA --\n',self.stages)
 
 		#Aqui a gente adiciona as camadas neurais que vão classificar, a partir dos atributos extraídos anteriormente.
 		self.classifier = backbone_model.classifier
@@ -175,9 +181,11 @@ class EarlyExitAlexnet(nn.Module):
 		self.classifier[6] = nn.Linear(1024, self.n_classes)		#Nº de camadas do dataset que se quer classificar.    
 		self.softmax = nn.Softmax(dim=1)
 
+		print("OOOOOOOOOO ",enumerate(self.exits))
 		for i, stage in enumerate(self.exits):
-			print('----',self.stages[i])
-		quit()
+			print('\n----',i,stage)
+			print(self.stages[i])
+			quit()
 
 
 	def early_exit_block(self,n):
@@ -208,6 +216,7 @@ class EarlyExitAlexnet(nn.Module):
 
 		for i, stage in enumerate(self.exits):
 			print('----',i,stage)
+			print(self.stages[i])
 			quit()
 
 			res = self.stages[i](lala)
