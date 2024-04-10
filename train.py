@@ -92,6 +92,7 @@ if __name__ == '__main__':
 	#model = ee.EarlyExitDNN(input_dim, device, pretrained=True)
 	model = ee.EarlyExitDNN(modelName, n_branchs, position_list, n_classes, input_dim, device)
 	model = model.to(device)
+	# print('model!!!')
 	# quit()
 
 	n_exits = model.n_branchs + 1

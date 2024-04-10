@@ -251,7 +251,25 @@ class Meter():
     def __repr__(self):
         return '\t'.join(['%s: %.5f (%.3f)' % (n, lv, v)
             for n, lv, v in zip(self.name, self._last_value, self.value())])
-	
+
+def compute_metrics(criterion, output_list, class_list, target):#, loss_weights):
+	model_loss = 0.0
+	ee_loss = [] #{i:[] for i in range(1, (n_exits)+1)}
+	ee_acc = [] #{i:[] for i in range(1, (n_exits)+1)}
+
+	for i, (output, inf_class) in enumerate(zip(output_list, class_list), 1):
+		loss_branch = criterion(output, target)
+		model_loss += loss_branch
+
+		acc_branch = accuracy_score(inf_class.cpu(),target.cpu())
+		ee_acc.append(acc_branch)
+		ee_loss.append(loss_branch)
+
+	acc_model = np.mean(np.array(acc))
+
+	return model_loss,ee_loss,ee_acc,acc_model
+
+
 def run_epoch(device, loader, model, criterion, optimizer, epoch=0, n_epochs=0, train=True):
 	'''
 	Inicializa as variaveis locais
@@ -260,12 +278,12 @@ def run_epoch(device, loader, model, criterion, optimizer, epoch=0, n_epochs=0, 
 	'''
 	n_exits = model.n_branchs + 1
 
-	loss = []
-	acc = []
+	# loss = []
+	# acc = []
 
-	time_meter = Meter(name='Time', cum=True)
-	loss_meter = {i:Meter(name='Loss-'+str(i), cum=False)for i in range(1, (n_exits)+1)}
-	acc_meter = {i:Meter(name='Acuracy-'+str(i), cum=False) for i in range(1, (n_exits)+1)}
+	# time_meter = Meter(name='Time', cum=True)
+	# loss_meter = {i:Meter(name='Loss-'+str(i), cum=False)for i in range(1, (n_exits)+1)}
+	# acc_meter = {i:Meter(name='Acuracy-'+str(i), cum=False) for i in range(1, (n_exits)+1)}
 
 	if train:
 		model.train()
@@ -282,7 +300,9 @@ def run_epoch(device, loader, model, criterion, optimizer, epoch=0, n_epochs=0, 
 
 			# Forward pass
 			input, target = input.to(device), target.to(device)
-			output,confidence, infered_class = model(input)
+			output_list,confidence, infered_class = model(input)
+			model_loss,ee_loss,ee_acc = compute_metrics(criterion, output_list, infered_class, target)
+
 			for i in n_exits:
 				loss.append = criterion(output[i], target)
 
@@ -295,7 +315,8 @@ def run_epoch(device, loader, model, criterion, optimizer, epoch=0, n_epochs=0, 
 			with torch.no_grad():
 				# Forward pass
 				input, target = input.to(device), target.to(device)
-				output,confidence, infered_class = model(input)
+				output,confidence, infered_class = model.forward(input)
+				model_loss,ee_loss,ee_acc = compute_metrics(criterion, output_list, class_list, target)
 				for i in n_exits:
 					loss.append = criterion(output[i], target)
 

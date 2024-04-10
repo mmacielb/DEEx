@@ -46,13 +46,6 @@ class EE_block(nn.Module):
 		self.layers.append(nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(device))
 		self.layers.append(nn.Linear(in_features=self.total_neurons, out_features=10, bias=True).to(device))
 
-		# self.conv = nn.Conv2d(self.input_shape, 32, kernel_size=3, stride=1, padding=1)
-		# self.maxpool = nn.MaxPool2d(kernel_size=3)
-		# self.dropout =  nn.Dropout(p=0.5, inplace=False).to(self.device)
-		# self.adaptative = nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(self.device)     ### Faz um pooling e coloca a saída no formato definido no outpusize
-		# self.total_neurons = 6*6*128
-		# self.linear = nn.Linear(in_features=self.total_neurons, out_features=10, bias=True).to(self.device)
-
 
 	def forward(self, ent_bl):
 		#branch = nn.ModuleList([self.conv,nn.ReLU(inplace=True),self.maxpool, self.dropout, self.adaptative, Flatten(), self.linear])
@@ -85,9 +78,9 @@ class EarlyExitDNN(nn.Module):
 		#print('device-',self.device)
 		
 		build_early_exit_dnn = self.dnn_architecture_model()
-		# build_early_exit_dnn()
-		# print('build',build_early_exit_dnn)
-		quit()
+		build_early_exit_dnn()
+		# print('BUILLLDDD \n',build_early_exit_dnn)
+		# quit()
 
 
 	def dnn_architecture_model(self):
@@ -125,7 +118,6 @@ class EarlyExitAlexnet(nn.Module):
 		self.n_classes = 10
 		self.input_dim = input_dim
 		self.device = device
-		#self.weights = "AlexNet_Weights"
 
 		# build_early_exit_dnn = self.dnn_architecture_model()
 		# build_early_exit_dnn()
@@ -142,7 +134,6 @@ class EarlyExitAlexnet(nn.Module):
 		# print(backbone_model)
 		# print('--- --- ---')
 
-		# print(backbone_model)
 
 		if self.n_branchs > 3:
 			print('the number of branchs is greather then the layes in alexnet model')
@@ -181,11 +172,12 @@ class EarlyExitAlexnet(nn.Module):
 		self.classifier[6] = nn.Linear(1024, self.n_classes)		#Nº de camadas do dataset que se quer classificar.    
 		self.softmax = nn.Softmax(dim=1)
 
-		print("OOOOOOOOOO ",enumerate(self.exits))
-		for i, stage in enumerate(self.exits):
-			print('\n----',i,stage)
-			print(self.stages[i])
-			quit()
+		# print('STAGES \n',self.stages)
+		# print("OOOOOOOOOO ",list(enumerate(self.exits)))
+		# for i, stage in enumerate(self.exits):
+		# 	print('\n----',i,stage)
+		# 	print('++',self.stages[i])
+		# quit()
 
 
 	def early_exit_block(self,n):
@@ -214,10 +206,12 @@ class EarlyExitAlexnet(nn.Module):
 		confidence = {i:[] for i in range(self.n_branchs+1)}
 		infered_class = {i:[] for i in range(self.n_branchs+1)}
 
+		# print('oi')
+
 		for i, stage in enumerate(self.exits):
-			print('----',i,stage)
-			print(self.stages[i])
-			quit()
+			# print('----',i,stage)
+			# print(self.stages[i])
+			# quit()
 
 			res = self.stages[i](lala)
 			# res_branch = self.exits[i](res)
