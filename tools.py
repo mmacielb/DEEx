@@ -38,7 +38,7 @@ def data_set(dataset,bt_size,input_dim,train):
 	std = [0.26753769276329037, 0.2638145880487105, 0.2776826934044154]
 
 	split_ratio = 0.1
-	batch_size = bt_size
+	# batch_size = bt_size
 	bt_size_test = bt_size
 
 

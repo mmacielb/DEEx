@@ -31,7 +31,7 @@ from torchvision import transforms, utils, datasets
 import tools
 import earlyExits as ee
 #from torchsummary import summary
-from temperature_scaling_gpleiss import ModelWithTemperature
+# from temperature_scaling_gpleiss import ModelWithTemperature
 
 
 ## chamar a rede para treinar
