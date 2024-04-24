@@ -36,35 +36,43 @@ class EE_block(nn.Module):
 		super(EE_block, self).__init__()
 
 		self.input_shape = input_shape
-		self.total_neurons = 6*6*128
+		# self.total_neurons = 6*6*128
+		self.total_neurons = 1152
 
 
 		self.layers = nn.ModuleList()
-		self.layers.append(nn.Conv2d(self.input_shape, 32, kernel_size=3, stride=1, padding=1))
-		self.layers.append(nn.MaxPool2d(kernel_size=3))
+		# self.classifier = nn.ModuleList()
+		self.layers.append(nn.Conv2d(self.input_shape, 32, kernel_size=3, stride=1, padding=1).to(device))
+		self.layers.append(nn.MaxPool2d(kernel_size=3).to(device))
 		self.layers.append(nn.Dropout(p=0.5, inplace=False).to(device))
 		self.layers.append(nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(device))
-		self.layers.append(nn.Linear(in_features=self.total_neurons, out_features=10, bias=True).to(device))
+		self.classifier = nn.Sequential(nn.Linear(in_features=self.total_neurons, out_features=10, bias=True)).to(device)
+
+		# self.conv = nn.Conv2d(self.input_shape, 32, kernel_size=3, stride=1, padding=1)
+		# self.maxpool = nn.MaxPool2d(kernel_size=3)
+		# self.dropout =  nn.Dropout(p=0.5, inplace=False).to(self.device)
+		# self.adaptative = nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(self.device)     ### Faz um pooling e coloca a saída no formato definido no outpusize
+		# self.total_neurons = 6*6*128
+		# self.linear = nn.Linear(in_features=self.total_neurons, out_features=10, bias=True).to(self.device)
 
 
-	def forward(self, ent_bl):
+	def forward(self, x):
 		#branch = nn.ModuleList([self.conv,nn.ReLU(inplace=True),self.maxpool, self.dropout, self.adaptative, Flatten(), self.linear])
 		for layer in self.layers:
-			x = layer(ent_bl)
+			x = layer(x)
 		x = x.view(x.size(0), -1)
 		output = self.classifier(x)
 		return output
 
-
 class EarlyExitDNN(nn.Module):
 
 	#def __init__(self, modelName, pretrained=True):
-	def __init__(self, modelName, n_branchs, position_list, n_classes, input_dim, device):
+	def __init__(self, modelName, n_branches, position_list, n_classes, input_dim, device):
 
 		super(EarlyExitDNN, self).__init__()
 
 		self.modelName = modelName
-		self.n_branchs = n_branchs
+		self.n_branches = n_branches
 		self.position_list = position_list
 		self.n_classes = n_classes
 		self.input_dim = input_dim
@@ -113,7 +121,7 @@ class EarlyExitAlexnet(nn.Module):
 
 		super(EarlyExitAlexnet, self).__init__()
 
-		self.n_branchs = 2
+		self.n_branches = 2
 		self.position_list = [2,5]
 		self.n_classes = 10
 		self.input_dim = input_dim
@@ -135,8 +143,8 @@ class EarlyExitAlexnet(nn.Module):
 		# print('--- --- ---')
 
 
-		if self.n_branchs > 3:
-			print('the number of branchs is greather then the layes in alexnet model')
+		if self.n_branches > 3:
+			print('the number of branches is greather then the layes in alexnet model')
 			quit()
 
 		conv_teste = nn.Conv2d(16, 33, 3, stride=2)
@@ -180,61 +188,64 @@ class EarlyExitAlexnet(nn.Module):
 		# quit()
 
 
-	def early_exit_block(self,n):
+	# def early_exit_block(self,n):
 
-		conv = nn.Conv2d(n, 32, kernel_size=3, stride=1, padding=1)
+	# 	conv = nn.Conv2d(n, 32, kernel_size=3, stride=1, padding=1)
 
-		maxpool = nn.MaxPool2d(kernel_size=3)
+	# 	maxpool = nn.MaxPool2d(kernel_size=3)
 
-		dropout =  nn.Dropout(p=0.5, inplace=False).to(self.device)
+	# 	dropout =  nn.Dropout(p=0.5, inplace=False).to(self.device)
 
-		adaptative = nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(self.device)     ### Faz um pooling e coloca a saída no formato definido no outpusize
+	# 	adaptative = nn.AdaptiveAvgPool2d(output_size=(6, 6)).to(self.device)     ### Faz um pooling e coloca a saída no formato definido no outpusize
 
-		total_neurons = 6*6*128
+	# 	total_neurons = 6*6*128
 
-		linear = nn.Linear(in_features=total_neurons, out_features=10, bias=True).to(self.device)
+	# 	linear = nn.Linear(in_features=total_neurons, out_features=10, bias=True).to(self.device)
 
-		#branch = nn.ModuleList([self.conv,nn.ReLU(inplace=True),self.maxpool, self.dropout, self.adaptative, Flatten(), self.linear])
-		branch = nn.ModuleList([conv,nn.ReLU(inplace=True),maxpool, dropout, adaptative, Flatten(), linear])
+	# 	#branch = nn.ModuleList([self.conv,nn.ReLU(inplace=True),self.maxpool, self.dropout, self.adaptative, Flatten(), self.linear])
+	# 	branch = nn.ModuleList([conv,nn.ReLU(inplace=True),maxpool, dropout, adaptative, Flatten(), linear])
 
-		return branch
+	# 	return branch
 
 
 
-	def forward(self,lala):
-		output = {i:[] for i in range(self.n_branchs+1)}
-		confidence = {i:[] for i in range(self.n_branchs+1)}
-		infered_class = {i:[] for i in range(self.n_branchs+1)}
-
-		# print('oi')
+	def forward(self,x):
+		output = [] #{i:[] for i in range(1,self.n_branches+2)}
+		confidence = [] #{i:[] for i in range(1,self.n_branches+2)}
+		infered_class = [] #{i:[] for i in range(1,self.n_branches+2)}
 
 		for i, stage in enumerate(self.exits):
 			# print('----',i,stage)
 			# print(self.stages[i])
 			# quit()
-
-			res = self.stages[i](lala)
+			x = self.stages[i](x)
 			# res_branch = self.exits[i](res)
-			res_branch = stage(res)
+			res_branch = stage(x)
+			res_branch = res_branch.to(self.device)
 			confidence_branch, infered_class_branch = torch.max(self.softmax(res_branch), 1)
-			output[i].append= res_branch
-			confidence[i].append = confidence_branch
-			infered_class[i].append = infered_class_branch
+			output.append(res_branch)
+			confidence.append(confidence_branch)
+			infered_class.append(infered_class_branch)
 
-		res = self.stages[-1](res)
-		
+			# output[i+1].append(res_branch)
+			# confidence[i+1].append(confidence_branch)
+			# infered_class[i+1].append(infered_class_branch)
+
+		res = self.stages[-1](x)
 		res = torch.flatten(res, 1)
-
 		output_bb = self.classifier(res)
+		output_bb = output_bb.to(self.device)
 
 		confidence_bb, infered_class_bb = torch.max(self.softmax(output_bb), 1)
 		#Confidence mede a confiança da predição e infered_calss aponta a classe inferida pela DNN
-		output[self.n_branchs+1].append= output_bb
-		confidence[self.n_branchs+1].append = confidence_bb
-		infered_class[self.n_branchs+1].append = infered_class_bb
+		output.append(output_bb)
+		confidence.append(confidence_bb)
+		infered_class.append(infered_class_bb)
 
+		# output[self.n_branches+1].append(output_bb)
+		# confidence[self.n_branches+1].append(confidence_bb)
+		# infered_class[self.n_branches+1].append(infered_class_bb)
 		return output, confidence, infered_class
-		#return output#, confidence, infered_class
 
 
 

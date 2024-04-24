@@ -66,6 +66,9 @@ def data_set(dataset,bt_size,input_dim,train):
 
 			#This line splits the training dataset into train and validation, according split ratio provided as input.
 			train_dataset, val_dataset = random_split(train_set, [train_size, val_size])
+			# print(val_dataset[0])
+			# quit()
+			torch.save(val_dataset, "../data/valid_set.pt")
 
 			#This block creates data loaders for training, validation and test datasets.
 
@@ -136,7 +139,7 @@ def data_set(dataset,bt_size,input_dim,train):
 
 
 
-def parameter(model,lr,opt):
+def parameter(model,lr,opt,n_branches):
 	
 	#lr=0.001 ##ou 
 	#lr=1.5e-4
@@ -161,11 +164,16 @@ def parameter(model,lr,opt):
 		{'params': model.exits.parameters(), 'lr': lr},
 		{'params': model.classifier.parameters(), 'lr': lr}], momentum=0.9) #weight_decay=args.weight_decay)
 
-	return criterion, optimizer
+		# weight = np.linspace(0.3, 1, n_branches+1)
+		# weight = np.linspace(1, 0.3, n_branches+1)
+		weight = np.ones(n_branches+1)
+
+
+	return criterion, optimizer, weight
 
 def initialize(classes_list,model):
 
-	exits = model.n_branchs+1
+	exits = model.n_branches+1
 
 	col = ['epoch']
 
@@ -190,100 +198,63 @@ def initialize(classes_list,model):
 
 
 def initialize_train(model):
-	n_exits = model.n_branchs + 1
+	n_exits = model.n_branches + 1
 	
 	train_time = []
 	valid_time = []
 
 	train_loss_dict = {i: [] for i in range(1, (n_exits)+1)}
-	#running_loss = []
+	train_loss_dict['model']=[]
 	train_acc_dict = {i: [] for i in range(1, (n_exits)+1)}
-	#train_acc_list = []
+	train_acc_dict['model']=[]
+	train_conf_dict = {i: [] for i in range(1, (n_exits)+1)}
+	# train_conf_dict['model']=[]
+
 	valid_loss_dict = {i: [] for i in range(1, (n_exits)+1)}
-	#running_loss = []
+	valid_loss_dict['model']=[]
 	valid_acc_dict = {i: [] for i in range(1, (n_exits)+1)}
-	#train_acc_list = []
+	valid_acc_dict['model']=[]
+	valid_conf_dict = {i: [] for i in range(1, (n_exits)+1)}
+	# valid_conf_dict['model']=[]
 
-	return train_time, train_loss_dict, train_acc_dict, valid_time, valid_loss_dict, valid_acc_dict
+	return train_time, train_loss_dict, train_acc_dict,train_conf_dict, valid_time, valid_loss_dict, valid_acc_dict,valid_conf_dict
 
-class Meter():
-    """
-    A little helper class which keeps track of statistics during an epoch.
-    """
-    def __init__(self, name, cum=False):
-        """
-        name (str or iterable): name of values for the meter
-            If an iterable of size n, updates require a n-Tensor
-        cum (bool): is this meter for a cumulative value (e.g. time)
-            or for an averaged value (e.g. loss)? - default False
-        """
-        self.cum = cum
-        if type(name) == str:
-            name = (name,)
-        self.name = name
-
-        self._total = torch.zeros(len(self.name))
-        self._last_value = torch.zeros(len(self.name))
-        self._count = 0.0
-
-    def update(self, data, n=1):
-        """
-        Update the meter
-        data (Tensor, or float): update value for the meter
-            Size of data should match size of ``name'' in the initialized args
-        """
-        self._count = self._count + n
-        if torch.is_tensor(data):
-            self._last_value.copy_(data)
-        else:
-            self._last_value.fill_(data)
-        self._total.add_(self._last_value)
-
-    def value(self):
-        """
-        Returns the value of the meter
-        """
-        if self.cum:
-            return self._total
-        else:
-            return self._total / self._count
-
-    def __repr__(self):
-        return '\t'.join(['%s: %.5f (%.3f)' % (n, lv, v)
-            for n, lv, v in zip(self.name, self._last_value, self.value())])
-
-def compute_metrics(criterion, output_list, class_list, target):#, loss_weights):
+def compute_metrics(criterion,weight_list,output_list,confidence_list,class_list, target):
 	model_loss = 0.0
 	ee_loss = [] #{i:[] for i in range(1, (n_exits)+1)}
 	ee_acc = [] #{i:[] for i in range(1, (n_exits)+1)}
+	ee_conf = []
 
-	for i, (output, inf_class) in enumerate(zip(output_list, class_list), 1):
+	for i, (output,inf_class,weight,confidence) in enumerate(zip(output_list, class_list,weight_list,confidence_list), 1):
 		loss_branch = criterion(output, target)
-		model_loss += loss_branch
+		model_loss += weight*loss_branch
 
 		acc_branch = accuracy_score(inf_class.cpu(),target.cpu())
 		ee_acc.append(acc_branch)
-		ee_loss.append(loss_branch)
+		ee_loss.append(loss_branch.item())
+		ee_conf.append(torch.mean(confidence).item())
+		# print('AAAAAA\n',ee_conf)
 
-	acc_model = np.mean(np.array(acc))
+		#loss_branch.backward()
 
-	return model_loss,ee_loss,ee_acc,acc_model
+	model_acc = np.mean(np.array(ee_acc))
+	return model_loss,model_acc,ee_loss,ee_acc,ee_conf
 
-
-def run_epoch(device, loader, model, criterion, optimizer, epoch=0, n_epochs=0, train=True):
+def run_epoch(device,loader,model,criterion,optimizer,weight,n_epochs,scaler,train=True):
 	'''
 	Inicializa as variaveis locais
 	realiza a rodada de uma época
 	retorna o tempo (time.value()) e os valores de loss e acuracia (met.[i].value()) da rodada
 	'''
-	n_exits = model.n_branchs + 1
+	n_exits = model.n_branches + 1
 
-	# loss = []
-	# acc = []
-
-	# time_meter = Meter(name='Time', cum=True)
-	# loss_meter = {i:Meter(name='Loss-'+str(i), cum=False)for i in range(1, (n_exits)+1)}
-	# acc_meter = {i:Meter(name='Acuracy-'+str(i), cum=False) for i in range(1, (n_exits)+1)}
+	time_list_epoch = []
+	model_loss_list, model_acc_list = [], []
+	ee_loss_list, ee_acc_list = [], []
+	ee_conf_list = []
+	loss_epoch = {}
+	acc_epoch = {}
+	confidence_epoch = {}
 
 	if train:
 		model.train()
@@ -293,52 +264,69 @@ def run_epoch(device, loader, model, criterion, optimizer, epoch=0, n_epochs=0, 
 		print('Evaluating')
 
 	end = time.time()
+	## comeca a rodada
 	for i, (input, target) in enumerate(loader):
+		# print(i," - finalmente!!!")
 		if train:
 			model.zero_grad()
 			optimizer.zero_grad()
 
 			# Forward pass
 			input, target = input.to(device), target.to(device)
-			output_list,confidence, infered_class = model(input)
-			model_loss,ee_loss,ee_acc = compute_metrics(criterion, output_list, infered_class, target)
-
-			for i in n_exits:
-				loss.append = criterion(output[i], target)
+			with torch.cuda.amp.autocast(enabled=True):
+				output_list,confidence_list,infered_class = model(input)	#Recebe o resultado da saída da rede em treinamento (3 listas)
+				model_loss,model_acc,ee_loss,ee_acc,ee_conf = compute_metrics(criterion, weight, output_list,confidence_list,infered_class,target)	#Calcula a loss e acc dos resultados obtidos
+			# print(output[1][0])
+			# print('-----')
+			# print(confidence)
 
 			# Backward pass
-			loss.backward()
-			optimizer.step()
-			optimizer.n_iters = optimizer.n_iters + 1 if hasattr(optimizer, 'n_iters') else 1
+			scaler.scale(model_loss).backward()
+
+			scaler.step(optimizer)
+			scaler.update()
+
+			# loss.backward()
+			# optimizer.step()
+			# optimizer.n_iters = optimizer.n_iters + 1 if hasattr(optimizer, 'n_iters') else 1
 
 		else:
 			with torch.no_grad():
 				# Forward pass
 				input, target = input.to(device), target.to(device)
-				output,confidence, infered_class = model.forward(input)
-				model_loss,ee_loss,ee_acc = compute_metrics(criterion, output_list, class_list, target)
-				for i in n_exits:
-					loss.append = criterion(output[i], target)
+				output_list,confidence_list, infered_class = model(input)	#Recebe o resultado da saída da rede em treinamento (3 listas)
+				model_loss,model_acc,ee_loss,ee_acc,ee_conf = compute_metrics(criterion, weight, output_list,confidence_list,infered_class,target)	#Calcula a loss e acc dos resultados obtidos
 
 
-		#_, predictions = torch.topk(output, 1)
-		for i in range(1, (n_exits)+1):
-			acc.append = accuracy_score(infered_class[i].cpu(),target.cpu())
+		# #_, predictions = torch.topk(output, 1)
+		# for i in range(1, (n_exits)+1):
+		# 	acc.append(accuracy_score(infered_class[i].cpu(),target.cpu()))
 		batch_time = time.time() - end
-		end = time.time()
+		time_list_epoch.append(batch_time)
 
-		# Log errors
-		time_meter.update(batch_time)
+		# print(ee_acc)
+		# print('2-----2')
+		# print(confidence)
 
-		for i in range(1, (n_exits)+1):
-			loss_meter[i].update(loss[i])
-			acc_meter[i].update(acc[i])
-		print('  '.join([
-			'%s: (Epoch %d of %d) [%04d/%04d]' % ('Train' if train else 'Eval',
-				epoch, n_epochs, i + 1, len(loader)),
-			str(time_meter),
-			str(loss_meter),
-			str(acc_meter),
-		]))
+		model_loss_list.append(model_loss.item())
+		model_acc_list.append(model_acc)
+		ee_loss_list.append(ee_loss)
+		ee_acc_list.append(ee_acc)
+		ee_conf_list.append(ee_conf)
 
-	return time_meter, loss_meter, acc_meter, confidence
+
+	time_meter = round(np.mean(time_list_epoch), 4)
+	loss_epoch['model'] = round(np.mean(model_loss_list), 4)
+	acc_epoch['model'] =  round(np.mean(model_acc_list), 4)
+	list_loss = np.mean(ee_loss_list, axis=0)
+	list_acc = np.mean(ee_acc_list, axis=0)
+	list_conf = np.mean(ee_conf_list, axis=0)
+	for i in range(1, (n_exits)+1):
+		loss_epoch[i] = list_loss[i-1]
+		acc_epoch[i] = list_acc[i-1]
+		confidence_epoch[i] = round(list_conf[i-1],4)
+
+	### Colocar um print com valores da rodada
+	print('epoch: ',n_epochs,'Model Loss = ',loss_epoch['model'],' Model Accuracy = ',acc_epoch['model'],'\n')
+
+	return time_meter, loss_epoch, acc_epoch, confidence_epoch
