@@ -151,7 +151,7 @@ def parameter(model,lr,opt,n_branches):
 	lr = lr
 	opt = opt
 
-
+    
 	if opt == 'adam':
 		optimizer = optim.Adam(model.parameters(),lr = lr)
 
@@ -159,14 +159,15 @@ def parameter(model,lr,opt,n_branches):
 		#print(list(model.parameters()))
 		#quit()
 		#optimizer = optim.SGD(model.parameters(),lr = lr,momentum=0.9)
+		# weight_decay=2e-05 
 
 		optimizer = optim.SGD([{'params': model.stages.parameters(), 'lr': lr}, 
 		{'params': model.exits.parameters(), 'lr': lr},
-		{'params': model.classifier.parameters(), 'lr': lr}], momentum=0.9) #weight_decay=args.weight_decay)
+		{'params': model.classifier.parameters(), 'lr': lr}], momentum=0.9,weight_decay = 1e-4) 
 
 		# weight = np.linspace(0.3, 1, n_branches+1)
 		# weight = np.linspace(1, 0.3, n_branches+1)
-		weight = np.ones(n_branches+1)
+	weight = np.ones(n_branches+1)
 
 
 	return criterion, optimizer, weight

@@ -70,11 +70,13 @@ if __name__ == '__main__':
 	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 	print('device: ',device,'\n')
 
-	epochs = 150
+	epochs = 90
 
 	## Tx de apredizado
-	lr = 0.001 ##ou 
-	#lr=1.5e-4
+	# lr = 0.001 ##ou 
+	# lr=1.5e-4
+	lr = 0.1
+
 
 	#Otimazador
 	opt = 'SGD'
@@ -83,7 +85,8 @@ if __name__ == '__main__':
 
 	dataset = 'cifar10'
 
-	bt_size = 128
+	# bt_size = 128
+	bt_size = 32
 	input_dim = 224
 	n_classes = 10
 
