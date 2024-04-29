@@ -1,33 +1,33 @@
-import numpy as np
+# import numpy as np
 import pandas as pd
 #import matplotlib.pyplot as plt
 #import cv2
 import os, sys, time, math, argparse
-import functools
-from PIL import Image
-from itertools import product
-import warnings
+# import functools
+# from PIL import Image
+# from itertools import product
+# import warnings
 
 import torch, random
-import torchvision
+# import torchvision
 
-from torch import Tensor
+# from torch import Tensor
 import torch.nn as nn
-import torch.nn.init as init
-import torch.nn.functional as F
-import torch.optim as optim
-from torch.optim.lr_scheduler import _LRScheduler
-from torch.optim import lr_scheduler
+# import torch.nn.init as init
+# import torch.nn.functional as F
+# import torch.optim as optim
+#from torch.optim.lr_scheduler import _LRScheduler
+# from torch.optim import lr_scheduler
 from torch.autograd import Variable
 from torch.utils.data.sampler import SubsetRandomSampler
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler, WeightedRandomSampler
 from torch.utils.data import random_split
 from tqdm.notebook import tqdm, trange
 
-import torchvision.transforms as transforms
-import torchvision.models as models
-from torchvision.utils import save_image
-from torchvision import transforms, utils, datasets
+# import torchvision.transforms as transforms
+# import torchvision.models as models
+# from torchvision.utils import save_image
+# from torchvision import transforms, utils, datasets
 import tools
 import earlyExits as ee
 #from torchsummary import summary
@@ -35,7 +35,7 @@ import earlyExits as ee
 
 
 ## chamar a rede para treinar
-def trainModel(device,train_loader, valid_loader,model,criterion,optimize,weight,epochs,scaler):
+def trainModel(device,train_loader, valid_loader,model,criterion,optimize,weight,epochs,scaler):#,lr_scheduler):
 
 	train_time, train_loss_dict, train_acc_dict,train_conf_dict, valid_time, valid_loss_dict, valid_acc_dict,valid_conf_dict = tools.initialize_train(model) #tools
 
@@ -44,6 +44,8 @@ def trainModel(device,train_loader, valid_loader,model,criterion,optimize,weight
 
 		train_time_meter, train_loss_epoch, train_acc_epoch, train_conf_epoch = tools.run_epoch(device,train_loader,model,criterion,optimize,weight,n_epochs,scaler,train=True) #tools
 		valid_time_meter, valid_loss_epoch, valid_acc_epoch, valid_conf_epoch = tools.run_epoch(device,valid_loader,model,criterion,optimize,weight,n_epochs,scaler,train=False) #tools
+		lr_scheduler.step()
+
 		train_time.append(train_time_meter)
 		valid_time.append(valid_time_meter)
 
@@ -70,12 +72,13 @@ if __name__ == '__main__':
 	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 	print('device: ',device,'\n')
 
-	epochs = 90
+	epochs = 200
 
 	## Tx de apredizado
-	# lr = 0.001 ##ou 
+	lr = 0.001 ##ou 
 	# lr=1.5e-4
-	lr = 0.1
+	# lr = 0.01
+	lr_warmup_epochs = 5
 
 
 	#Otimazador
@@ -108,14 +111,21 @@ if __name__ == '__main__':
 
 
 	# Paremetros de configuracao da rede neural
-	criterion, optimize, weight = tools.parameter(model,lr,opt,n_branches) #tools
+	criterion, optimizer, weight = tools.parameter(model,lr,opt,n_branches) #tools
 	criterion = criterion.to(device)
 	softmax = nn.Softmax(dim=1)
 
 
-	# Preparar o que eu quero de resutados
+	main_lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs - lr_warmup_epochs, eta_min=0)
 
-	train_time, train_loss_dict, train_acc_dict,train_conf_dict, valid_time, valid_loss_dict, valid_acc_dict,valid_conf_dict = trainModel(device,train_loader, valid_loader,model,criterion,optimize,weight,epochs,scaler)
+
+	warmup_lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,start_factor=0.01, total_iters=lr_warmup_epochs)
+
+	lr_scheduler = torch.optim.lr_scheduler.SequentialLR(optimizer, schedulers=[warmup_lr_scheduler, main_lr_scheduler], milestones=[lr_warmup_epochs])
+
+
+
+	train_time, train_loss_dict, train_acc_dict,train_conf_dict, valid_time, valid_loss_dict, valid_acc_dict,valid_conf_dict = trainModel(device,train_loader, valid_loader,model,criterion,optimizer,weight,epochs,scaler)#,lr_scheduler)
 
 	torch.cuda.empty_cache()
 	

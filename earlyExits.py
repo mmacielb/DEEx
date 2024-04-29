@@ -1,32 +1,32 @@
-import numpy as np
-import pandas as pd
+# import numpy as np
+# import pandas as pd
 #import matplotlib.pyplot as plt
 #import os, cv2, sys, time, math
-import os, sys, time, math, argparse
-import functools
-from PIL import Image
-from itertools import product
+# import os, sys, time, math, argparse
+# import functools
+# from PIL import Image
+# from itertools import product
 
 import torch, random
-import torchvision
+# import torchvision
 
-from torch import Tensor
+# from torch import Tensor
 import torch.nn as nn
-import torch.nn.init as init
-import torch.nn.functional as F
-import torch.optim as optim
-from torch.optim.lr_scheduler import _LRScheduler
-from torch.optim import lr_scheduler
-from torch.autograd import Variable
-from torch.utils.data.sampler import SubsetRandomSampler
-from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler, WeightedRandomSampler
-from torch.utils.data import random_split
-from tqdm.notebook import tqdm, trange
+# import torch.nn.init as init
+# import torch.nn.functional as F
+# import torch.optim as optim
+# from torch.optim.lr_scheduler import _LRScheduler
+# from torch.optim import lr_scheduler
+# from torch.autograd import Variable
+# from torch.utils.data.sampler import SubsetRandomSampler
+# from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler, WeightedRandomSampler
+# from torch.utils.data import random_split
+# from tqdm.notebook import tqdm, trange
 
-import torchvision.transforms as transforms
+# import torchvision.transforms as transforms
 import torchvision.models as models
-from torchvision.utils import save_image
-from torchvision import transforms, utils, datasets
+# from torchvision.utils import save_image
+# from torchvision import transforms, utils, datasets
 
 #import tools
 #from torchsummary import summary
@@ -165,10 +165,6 @@ class EarlyExitAlexnet(nn.Module):
 					self.layers = nn.ModuleList()
 					self.stage_id += 1
 
-		# print('AAAAAAAAAA --\n',self.stages)
-		# print('AAAAAAAAAA --\n',*self.stages)
-		# quit()
-		
 
 		self.layers.append(nn.AdaptiveAvgPool2d(output_size=(6, 6)))				   ## coloca a saída no formato definido no outpusize. Esta fora do features e do classifier da backbone 
 		self.stages.append(nn.Sequential(*self.layers))
@@ -227,10 +223,6 @@ class EarlyExitAlexnet(nn.Module):
 			confidence.append(confidence_branch)
 			infered_class.append(infered_class_branch)
 
-			# output[i+1].append(res_branch)
-			# confidence[i+1].append(confidence_branch)
-			# infered_class[i+1].append(infered_class_branch)
-
 		res = self.stages[-1](x)
 		res = torch.flatten(res, 1)
 		output_bb = self.classifier(res)
@@ -242,12 +234,65 @@ class EarlyExitAlexnet(nn.Module):
 		confidence.append(confidence_bb)
 		infered_class.append(infered_class_bb)
 
-		# output[self.n_branches+1].append(output_bb)
-		# confidence[self.n_branches+1].append(confidence_bb)
-		# infered_class[self.n_branches+1].append(infered_class_bb)
 		return output, confidence, infered_class
 
+	# def forward_eval(self,x,p_min,p_tar=None):
+	# 	output = [] #{i:[] for i in range(1,self.n_branches+2)}
+	# 	confidence = [] #{i:[] for i in range(1,self.n_branches+2)}
+	# 	infered_class = [] #{i:[] for i in range(1,self.n_branches+2)}
+	# 	i=0
 
+	# 	x = self.stages[i](x)
+	# 	# res_branch = self.exits[i](res)
+	# 	res_branch = stage(x)
+	# 	res_branch = res_branch.to(self.device)
+	# 	confidence_branch, infered_class_branch = torch.max(self.softmax(res_branch), 1)
+	# 	output.append(res_branch)
+	# 	confidence.append(confidence_branch)
+	# 	infered_class.append(infered_class_branch)
+	# 	i +=1
+	# 	if confidence_branch.item() >= p_min:
+	# 		for i, stage in enumerate(self.exits):
+	# 			x = self.stages[i](x)
+	# 			# res_branch = self.exits[i](res)
+	# 			res_branch = stage(x)
+	# 			res_branch = res_branch.to(self.device)
+	# 			confidence_branch, infered_class_branch = torch.max(self.softmax(res_branch), 1)
+	# 			output.append(res_branch)
+	# 			confidence.append(confidence_branch)
+	# 			infered_class.append(infered_class_branch)
+	# 		if confidence_branch.item() < p_tar:
+	# 			res = self.stages[-1](x)
+	# 			res = torch.flatten(res, 1)
+	# 			output_bb = self.classifier(res)
+	# 			output_bb = output_bb.to(self.device)
+	# 			confidence_bb, infered_class_bb = torch.max(self.softmax(output_bb), 1)
+	# 			#Confidence mede a confiança da predição e infered_calss aponta a classe inferida pela DNN
+	# 			output.append(output_bb)
+	# 			confidence.append(confidence_bb)
+	# 			infered_class.append(infered_class_bb)		
+	# 		else:
+	# 			output.append(0)
+	# 			confidence.append(0)
+	# 			infered_class.append(0)		
+
+	# 	else:
+	# 		for i, stage in enumerate(self.exits):
+	# 			x = self.stages[i](x)
+	# 			output.append(0)
+	# 			confidence.append(0)
+	# 			infered_class.append(0)
+	# 		res = self.stages[-1](x)
+	# 		res = torch.flatten(res, 1)
+	# 		output_bb = self.classifier(res)
+	# 		output_bb = output_bb.to(self.device)
+	# 		confidence_bb, infered_class_bb = torch.max(self.softmax(output_bb), 1)
+	# 		#Confidence mede a confiança da predição e infered_calss aponta a classe inferida pela DNN
+	# 		output.append(output_bb)
+	# 		confidence.append(confidence_bb)
+	# 		infered_class.append(infered_class_bb)		
+
+	# 	return output, confidence, infered_class
 
 
 # class EarlyExitMobilenet(nn.Module):

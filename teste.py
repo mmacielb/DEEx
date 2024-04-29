@@ -33,14 +33,18 @@ import earlyExits as ee
 #from torchsummary import summary
 # from temperature_scaling_gpleiss import ModelWithTemperature
 
-def testModel(device,train_loader, valid_loader,model,criterion,optimize,weight,epochs,scaler):
+def testModel(device,test_loader,model,criterion,optimize,weight,epochs,scaler):
 
 	# train_time, train_loss_dict, train_acc_dict,train_conf_dict, valid_time, valid_loss_dict, valid_acc_dict,valid_conf_dict = tools.initialize_train(model) #tools
 
 	for n_epochs in range(epochs):
 		print(n_epochs)
 
-		train_time_meter, train_loss_epoch, train_acc_epoch, train_conf_epoch = tools.run_epoch(device,train_loader,model,criterion,optimize,weight,n_epochs,scaler,train=True) 
+		test_time_meter, test_loss_epoch, test_acc_epoch, test_conf_epoch = tools.run_epoch(device,test_loader,model,criterion,optimize,weight,n_epochs,scaler,train=False)
+
+
+
+
 
 if __name__ == '__main__':
 
@@ -53,11 +57,14 @@ if __name__ == '__main__':
 	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 	print('device: ',device,'\n')
 
-	epochs = 150
+	epochs = 200
 
 	## Tx de apredizado
 	lr = 0.001 ##ou 
-	#lr=1.5e-4
+	# lr=1.5e-4
+	# lr = 0.01
+	lr_warmup_epochs = 5
+
 
 	#Otimazador
 	opt = 'SGD'
@@ -66,19 +73,19 @@ if __name__ == '__main__':
 
 	dataset = 'cifar10'
 
-	bt_size = 128
+	# bt_size = 128
+	bt_size = 1
 	input_dim = 224
 	n_classes = 10
 
 	n_branches = 2
 	position_list = [2,5]
 
+
 	modelName = "alexnet"
 
 	classes_list, label_list, test_loader = tools.data_set(dataset,bt_size,input_dim,train=False) #tools
 
-	#model = ee.EarlyExitDNN(input_dim, device, pretrained=True)
-	# model = EarlyExitDNN(modelName, n_branches, position_list, n_classes, input_dim, device) #ee
 	model = ee.EarlyExitAlexnet(input_dim, device)
 	model = model.to(device)
 	# print('model!!!')
@@ -88,28 +95,30 @@ if __name__ == '__main__':
 	
 	n_exits = model.n_branches + 1
 	# Paremetros de configuracao da rede neural
-	criterion, optimize, weight = tools.parameter(model,lr,opt,n_branches) #tools
+	criterion, optimizer, weight = tools.parameter(model,lr,opt,n_branches) #tools
 	criterion = criterion.to(device)
 	softmax = nn.Softmax(dim=1)
 
 
-	# Preparar o que eu quero de resutados
+	main_lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs - lr_warmup_epochs, eta_min=0)
 
-	run_epoch(device,loader,model,criterion,optimizer,weight,n_epochs,scaler,train=True)
+
+	warmup_lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,start_factor=0.01, total_iters=lr_warmup_epochs)
+
+	lr_scheduler = torch.optim.lr_scheduler.SequentialLR(optimizer, schedulers=[warmup_lr_scheduler, main_lr_scheduler], milestones=[lr_warmup_epochs])
+
+	test_time, test_loss_dict, test_loss_dict,test_conf_dict = testModel(device,test_loader, model,criterion,optimizer,weight,epochs,scaler,lr_scheduler)
 
 	torch.cuda.empty_cache()
 	
 	##### Editando os Resultados
 	epochs_list = [ i for i in range(1,epochs+1)]
 	epochs_dict = {'epoch':epochs_list}
-	time_result = {'epoch':epochs_list,'train':train_time,'valid':valid_time}
+	time_result = {'epoch':epochs_list,'train':test_time}
 
-	train_loss_dict = epochs_dict | train_loss_dict
-	train_acc_dict = epochs_dict | train_acc_dict
-	train_conf_dict = epochs_dict | train_conf_dict
-	valid_loss_dict = epochs_dict | valid_loss_dict
-	valid_acc_dict = epochs_dict | valid_acc_dict
-	valid_conf_dict = epochs_dict | valid_conf_dict
+	test_loss_dict = epochs_dict | test_loss_dict
+	test_loss_dict = epochs_dict | test_loss_dict
+	test_conf_dict = epochs_dict | test_conf_dict
 
-	# print(train_loss_dict)
+	# print(test_loss_dict)
 	# print('____________')

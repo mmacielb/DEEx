@@ -1,32 +1,34 @@
 import numpy as np
-import pandas as pd
+# import pandas as pd
 #import matplotlib.pyplot as plt
 #import os, cv2, sys, time, math
 import os, sys, time, math, argparse
-import functools
-from PIL import Image
-from itertools import product
+# import functools
+# from PIL import Image
+# from itertools import product
 
 import torch, random
-import torchvision
+# import torchvision
 
-from torch import Tensor
+# from torch import Tensor
 import torch.nn as nn
-import torch.nn.init as init
-import torch.nn.functional as F
+# import torch.nn.init as init
+# import torch.nn.functional as F
 import torch.optim as optim
-from torch.optim.lr_scheduler import _LRScheduler
-from torch.optim import lr_scheduler
-from torch.autograd import Variable
-from torch.utils.data.sampler import SubsetRandomSampler
-from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler, WeightedRandomSampler
+# from torch.optim.lr_scheduler import _LRScheduler
+# from torch.optim import lr_scheduler
+# from torch.autograd import Variable
+# from torch.utils.data.sampler import SubsetRandomSampler
+# from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler, WeightedRandomSampler
+from torch.utils.data import DataLoader
 from torch.utils.data import random_split
 from tqdm.notebook import tqdm, trange
 
 import torchvision.transforms as transforms
-import torchvision.models as models
+# import torchvision.models as models
 from torchvision.utils import save_image
-from torchvision import transforms, utils, datasets
+from torchvision import transforms,datasets
+# from torchvision import utils
 #from torchsummary import summary
 
 from sklearn.metrics import accuracy_score, precision_score, confusion_matrix
@@ -147,6 +149,7 @@ def parameter(model,lr,opt,n_branches):
 	#opt = 'SGD'
 	# opt = 'adam'
 
+	# criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 	criterion = nn.CrossEntropyLoss()
 	lr = lr
 	opt = opt
@@ -270,7 +273,7 @@ def run_epoch(device,loader,model,criterion,optimizer,weight,n_epochs,scaler,tra
 		# print(i," - finalmente!!!")
 		if train:
 			model.zero_grad()
-			optimizer.zero_grad()
+			# optimizer.zero_grad()
 
 			# Forward pass
 			input, target = input.to(device), target.to(device)
@@ -281,6 +284,7 @@ def run_epoch(device,loader,model,criterion,optimizer,weight,n_epochs,scaler,tra
 			# print('-----')
 			# print(confidence)
 
+			optimizer.zero_grad()
 			# Backward pass
 			scaler.scale(model_loss).backward()
 
@@ -297,7 +301,9 @@ def run_epoch(device,loader,model,criterion,optimizer,weight,n_epochs,scaler,tra
 				input, target = input.to(device), target.to(device)
 				output_list,confidence_list, infered_class = model(input)	#Recebe o resultado da saída da rede em treinamento (3 listas)
 				model_loss,model_acc,ee_loss,ee_acc,ee_conf = compute_metrics(criterion, weight, output_list,confidence_list,infered_class,target)	#Calcula a loss e acc dos resultados obtidos
-
+		
+		del input,target,output_list,confidence_list,infered_class
+		torch.cuda.empty_cache()
 
 		# #_, predictions = torch.topk(output, 1)
 		# for i in range(1, (n_exits)+1):
@@ -323,11 +329,11 @@ def run_epoch(device,loader,model,criterion,optimizer,weight,n_epochs,scaler,tra
 	list_acc = np.mean(ee_acc_list, axis=0)
 	list_conf = np.mean(ee_conf_list, axis=0)
 	for i in range(1, (n_exits)+1):
-		loss_epoch[i] = list_loss[i-1]
-		acc_epoch[i] = list_acc[i-1]
+		loss_epoch[i] = round(list_loss[i-1],4)
+		acc_epoch[i] = round(list_acc[i-1],4)
 		confidence_epoch[i] = round(list_conf[i-1],4)
 
 	### Colocar um print com valores da rodada
-	print('epoch: ',n_epochs,'Model Loss = ',loss_epoch['model'],' Model Accuracy = ',acc_epoch['model'],'\n')
+	print('epoch: ',n_epochs,'Model Loss = ',loss_epoch['model'],' Model Accuracy = ',acc_epoch['model'])#,'\n')
 
 	return time_meter, loss_epoch, acc_epoch, confidence_epoch
