@@ -1,4 +1,4 @@
-# import numpy as np
+import numpy as np
 # import pandas as pd
 #import matplotlib.pyplot as plt
 #import os, cv2, sys, time, math
@@ -272,16 +272,16 @@ class EarlyExitAlexnet(nn.Module):
 	# 			confidence.append(confidence_bb)
 	# 			infered_class.append(infered_class_bb)		
 	# 		else:
-	# 			output.append(0)
-	# 			confidence.append(0)
-	# 			infered_class.append(0)		
+	# 			output.append(np.nan)
+	# 			confidence.append(np.nan)
+	# 			infered_class.append(np.nan)		
 
 	# 	else:
 	# 		for i, stage in enumerate(self.exits):
 	# 			x = self.stages[i](x)
-	# 			output.append(0)
-	# 			confidence.append(0)
-	# 			infered_class.append(0)
+	# 			output.append(np.nan)
+	# 			confidence.append(np.nan)
+	# 			infered_class.append(np.nan)
 	# 		res = self.stages[-1](x)
 	# 		res = torch.flatten(res, 1)
 	# 		output_bb = self.classifier(res)
@@ -294,6 +294,60 @@ class EarlyExitAlexnet(nn.Module):
 
 	# 	return output, confidence, infered_class
 
+def forward_eval(self,x,p_min,p_tar=None):
+		output = [] #{i:[] for i in range(1,self.n_branches+2)}
+		confidence = [] #{i:[] for i in range(1,self.n_branches+2)}
+		infered_class = [] #{i:[] for i in range(1,self.n_branches+2)}
+		i=0
+
+		for i, stage in enumerate(self.exits):
+			if i == 0:
+				x = self.stages[i](x)
+				# res_branch = self.exits[i](res)
+				res_branch = stage(x)
+				res_branch = res_branch.to(self.device)
+				confidence_branch, infered_class_branch = torch.max(self.softmax(res_branch), 1)
+				output.append(res_branch)
+				confidence.append(confidence_branch)
+				infered_class.append(infered_class_branch)
+			else:
+				if confidence[0] >= p_min:
+					x = self.stages[i](x)
+					# res_branch = self.exits[i](res)
+					res_branch = stage(x)
+					res_branch = res_branch.to(self.device)
+					confidence_branch, infered_class_branch = torch.max(self.softmax(res_branch), 1)
+					output.append(res_branch)
+					confidence.append(confidence_branch)
+					infered_class.append(infered_class_branch)
+					# if confidence_branch.item() < p_tar:
+					# 	res = self.stages[-1](x)
+					# 	res = torch.flatten(res, 1)
+					# 	output_bb = self.classifier(res)
+					# 	output_bb = output_bb.to(self.device)
+					# 	confidence_bb, infered_class_bb = torch.max(self.softmax(output_bb), 1)
+					# 	#Confidence mede a confiança da predição e infered_calss aponta a classe inferida pela DNN
+					# 	output.append(output_bb)
+					# 	confidence.append(confidence_bb)
+					# 	infered_class.append(infered_class_bb)		
+
+		else:
+			for i, stage in enumerate(self.exits):
+				x = self.stages[i](x)
+				output.append(np.nan)
+				confidence.append(np.nan)
+				infered_class.append(np.nan)
+			res = self.stages[-1](x)
+			res = torch.flatten(res, 1)
+			output_bb = self.classifier(res)
+			output_bb = output_bb.to(self.device)
+			confidence_bb, infered_class_bb = torch.max(self.softmax(output_bb), 1)
+			#Confidence mede a confiança da predição e infered_calss aponta a classe inferida pela DNN
+			output.append(output_bb)
+			confidence.append(confidence_bb)
+			infered_class.append(infered_class_bb)		
+
+		return output, confidence, infered_class
 
 # class EarlyExitMobilenet(nn.Module):
 

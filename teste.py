@@ -33,17 +33,25 @@ import earlyExits as ee
 #from torchsummary import summary
 # from temperature_scaling_gpleiss import ModelWithTemperature
 
-def testModel(device,test_loader,model,criterion,optimize,weight,epochs,scaler):
+def testModel(device,test_loader,model,criterion,optimize,weight,p_min_list,scaler):
 
-	# train_time, train_loss_dict, train_acc_dict,train_conf_dict, valid_time, valid_loss_dict, valid_acc_dict,valid_conf_dict = tools.initialize_train(model) #tools
+	test_time, test_loss_dict, test_acc_dict,test_conf_dict,all_conf_matrix = tools.initialize_test(model,classes_list) #tools
 
-	for n_epochs in range(epochs):
-		print(n_epochs)
+	for p_min in p_min_list:
+		print(p_min)
+		samples_list = [0,0,0]
 
-		test_time_meter, test_loss_epoch, test_acc_epoch, test_conf_epoch = tools.run_epoch(device,test_loader,model,criterion,optimize,weight,n_epochs,scaler,train=False)
+		test_time_meter, test_loss_epoch, test_acc_epoch, test_conf_epoch = tools.run_epoch(device,test_loader,model,criterion,optimize,weight,p_min,scaler,train=False)
 
+		test_time.append(test_time_meter)
+		for k,v in test_loss_dict.items():
+			test_loss_dict[k].append(test_loss_epoch[k])
+			test_acc_dict[k].append(test_acc_epoch[k])
+			if k != 'model':
+				test_conf_dict[k].append(test_conf_epoch[k])
+				samples_list[k-1].append(len([x for x in test_conf_epoch[k] if not math.isnan(x)]))
 
-
+		return test_time_meter, test_loss_epoch, test_acc_epoch, test_conf_epoch
 
 
 if __name__ == '__main__':
@@ -56,6 +64,8 @@ if __name__ == '__main__':
 
 	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 	print('device: ',device,'\n')
+
+	p_min_list = [i/100 for i in range(0,105,5)]
 
 	epochs = 200
 
@@ -107,18 +117,20 @@ if __name__ == '__main__':
 
 	lr_scheduler = torch.optim.lr_scheduler.SequentialLR(optimizer, schedulers=[warmup_lr_scheduler, main_lr_scheduler], milestones=[lr_warmup_epochs])
 
-	test_time, test_loss_dict, test_loss_dict,test_conf_dict = testModel(device,test_loader, model,criterion,optimizer,weight,epochs,scaler,lr_scheduler)
+	test_time, test_loss_dict, test_loss_dict,test_conf_dict = testModel(device,test_loader, model,criterion,optimizer,weight,p_min_list,scaler)
+
+	print('ok!!')
 
 	torch.cuda.empty_cache()
 	
 	##### Editando os Resultados
-	epochs_list = [ i for i in range(1,epochs+1)]
-	epochs_dict = {'epoch':epochs_list}
-	time_result = {'epoch':epochs_list,'train':test_time}
+	# epochs_list = [ i for i in range(1,epochs+1)]
+	# epochs_dict = {'epoch':epochs_list}
+	# time_result = {'epoch':epochs_list,'train':test_time}
 
-	test_loss_dict = epochs_dict | test_loss_dict
-	test_loss_dict = epochs_dict | test_loss_dict
-	test_conf_dict = epochs_dict | test_conf_dict
+	# test_loss_dict = epochs_dict | test_loss_dict
+	# test_loss_dict = epochs_dict | test_loss_dict
+	# test_conf_dict = epochs_dict | test_conf_dict
 
 	# print(test_loss_dict)
 	# print('____________')

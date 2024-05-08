@@ -79,12 +79,12 @@ def data_set(dataset,bt_size,input_dim,train):
 
 
 		else:	
-			test_dataset = datasets.CIFAR10(root='../data', train=False, download=True, transform=data_transform)
+			test_set = datasets.CIFAR10(root='../data', train=False, download=True, transform=data_transform)
 			classes_list = test_set.classes
 			label_list = list(test_set.class_to_idx.values())
 
 			#This block creates data loaders for training, validation and test datasets.
-			test_loader = DataLoader(test_dataset, batch_size = bt_size_test, num_workers=2, pin_memory=True)
+			test_loader = DataLoader(test_set, batch_size = bt_size_test, num_workers=2, pin_memory=True)
 
 
 
@@ -175,30 +175,28 @@ def parameter(model,lr,opt,n_branches):
 
 	return criterion, optimizer, weight
 
-def initialize(classes_list,model):
+def initialize_test(model,classes_list):
 
-	exits = model.n_branches+1
+	n_exits = model.n_branches+1
+	test_time = []
 
-	col = ['epoch']
+	test_loss_dict = {i: [] for i in range(1, (n_exits)+1)}
+	test_loss_dict['model']=[]
+	test_acc_dict = {i: [] for i in range(1, (n_exits)+1)}
+	test_acc_dict['model']=[]
+	test_conf_dict = {i: [] for i in range(1, (n_exits)+1)}
+
 
 	test_conf_matrix = np.zeros(len(classes_list)*len(classes_list)).reshape(len(classes_list),len(classes_list))
 
 	all_conf_matrix = {}
-	train_times = {}
-	val_times = {}
 
-	for i in range(1,exits+1):
-		col.append('loss_'+str(i),'acc_'+str(i))
+	for i in range(1,n_exits+1):
+		# col.append('loss_'+str(i),'acc_'+str(i))
 		all_conf_matrix[i] = test_conf_matrix
-		train_times[i] = 0.0 
-		val_times[i] = 0.0 
 
 
-	train_res = {i: [] for i in col}
-	val_res = {i: [] for i in col}
-	#test_res = {i: [] for i in col}
-
-	return
+	return test_time, test_loss_dict, test_acc_dict,test_conf_dict,all_conf_matrix
 
 
 def initialize_train(model):
@@ -299,7 +297,8 @@ def run_epoch(device,loader,model,criterion,optimizer,weight,n_epochs,scaler,tra
 			with torch.no_grad():
 				# Forward pass
 				input, target = input.to(device), target.to(device)
-				output_list,confidence_list, infered_class = model(input)	#Recebe o resultado da saída da rede em treinamento (3 listas)
+				# output_list,confidence_list, infered_class = model(input)	#Recebe o resultado da saída da rede em treinamento (3 listas)
+				output_list,confidence_list, infered_class = model.forward_eval(input,n_epochs)	#Recebe o resultado da saída da rede em treinamento (3 listas)
 				model_loss,model_acc,ee_loss,ee_acc,ee_conf = compute_metrics(criterion, weight, output_list,confidence_list,infered_class,target)	#Calcula a loss e acc dos resultados obtidos
 		
 		del input,target,output_list,confidence_list,infered_class

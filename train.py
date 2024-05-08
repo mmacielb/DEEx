@@ -88,8 +88,8 @@ if __name__ == '__main__':
 
 	dataset = 'cifar10'
 
-	# bt_size = 128
-	bt_size = 32
+	bt_size = 128
+	# bt_size = 32
 	input_dim = 224
 	n_classes = 10
 
