@@ -33,25 +33,45 @@ import earlyExits as ee
 #from torchsummary import summary
 # from temperature_scaling_gpleiss import ModelWithTemperature
 
-def testModel(device,test_loader,model,criterion,optimize,weight,p_min_list,scaler):
+# def testModel(device,test_loader,model,criterion,optimize,weight,p_min_list,scaler):
 
-	test_time, test_loss_dict, test_acc_dict,test_conf_dict,all_conf_matrix = tools.initialize_test(model,classes_list) #tools
+# 	test_time, test_loss_dict, test_acc_dict,test_conf_dict,all_conf_matrix = tools.initialize_test(model,classes_list) #tools
 
-	for p_min in p_min_list:
-		print(p_min)
-		samples_list = [0,0,0]
+# 	for p_min in p_min_list:
+# 		print(p_min)
+# 		samples_list = [0,0,0]
 
-		test_time_meter, test_loss_epoch, test_acc_epoch, test_conf_epoch = tools.run_epoch(device,test_loader,model,criterion,optimize,weight,p_min,scaler,train=False)
+# 		test_time_meter, test_loss_epoch, test_acc_epoch, test_conf_epoch = tools.run_epoch(device,test_loader,model,criterion,optimize,weight,p_min,scaler,train=False)
+
+# 		test_time.append(test_time_meter)
+# 		for k,v in test_loss_dict.items():
+# 			test_loss_dict[k].append(test_loss_epoch[k])
+# 			test_acc_dict[k].append(test_acc_epoch[k])
+# 			if k != 'model':
+# 				test_conf_dict[k].append(test_conf_epoch[k])
+# 				samples_list[k-1].append(len([x for x in test_conf_epoch[k] if not math.isnan(x)]))
+
+# 		return test_time_meter, test_loss_epoch, test_acc_epoch, test_conf_epoch
+
+def testModel(device,test_loader,model,criterion,optimize,weight,epochs,scaler):
+
+	test_time, test_loss_dict, test_acc_dict,test_conf_dict, _, _, _, _ = tools.initialize_train(model) #tools
+
+	for n_epochs in range(epochs):
+		print(n_epochs)
+
+		test_time_meter, test_loss_epoch, test_acc_epoch, test_conf_epoch = tools.run_epoch(device,test_loader,model,criterion,optimize,weight,n_epochs,scaler,train=False) #tools
+		# lr_scheduler.step()
 
 		test_time.append(test_time_meter)
+
 		for k,v in test_loss_dict.items():
 			test_loss_dict[k].append(test_loss_epoch[k])
 			test_acc_dict[k].append(test_acc_epoch[k])
 			if k != 'model':
 				test_conf_dict[k].append(test_conf_epoch[k])
-				samples_list[k-1].append(len([x for x in test_conf_epoch[k] if not math.isnan(x)]))
 
-		return test_time_meter, test_loss_epoch, test_acc_epoch, test_conf_epoch
+	return test_time, test_loss_dict, test_acc_dict,test_conf_dict
 
 
 if __name__ == '__main__':
@@ -67,7 +87,7 @@ if __name__ == '__main__':
 
 	p_min_list = [i/100 for i in range(0,105,5)]
 
-	epochs = 200
+	epochs = 21
 
 	## Tx de apredizado
 	lr = 0.001 ##ou 
@@ -108,7 +128,7 @@ if __name__ == '__main__':
 	criterion, optimizer, weight = tools.parameter(model,lr,opt,n_branches) #tools
 	criterion = criterion.to(device)
 	softmax = nn.Softmax(dim=1)
-
+	
 
 	main_lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs - lr_warmup_epochs, eta_min=0)
 
@@ -117,20 +137,39 @@ if __name__ == '__main__':
 
 	lr_scheduler = torch.optim.lr_scheduler.SequentialLR(optimizer, schedulers=[warmup_lr_scheduler, main_lr_scheduler], milestones=[lr_warmup_epochs])
 
-	test_time, test_loss_dict, test_loss_dict,test_conf_dict = testModel(device,test_loader, model,criterion,optimizer,weight,p_min_list,scaler)
+	rod = 2
 
-	print('ok!!')
+	test_time, test_loss_dict, test_acc_dict,test_conf_dict = testModel(device,test_loader, model,criterion,optimizer,weight,rod,scaler)
+
+	print('Fim do Teste')
 
 	torch.cuda.empty_cache()
 	
 	##### Editando os Resultados
-	# epochs_list = [ i for i in range(1,epochs+1)]
-	# epochs_dict = {'epoch':epochs_list}
-	# time_result = {'epoch':epochs_list,'train':test_time}
+	rod_list = [ i for i in range(1,rod+1)]
+	rod_dict = {'epoch':rod_list}
+	time_result = {'epoch':rod_list,'test':test_time}
+	print(time_result)
+	# quit()
 
-	# test_loss_dict = epochs_dict | test_loss_dict
-	# test_loss_dict = epochs_dict | test_loss_dict
-	# test_conf_dict = epochs_dict | test_conf_dict
+	test_loss_dict = rod_dict | test_loss_dict
+	test_acc_dict = rod_dict | test_acc_dict
+	test_conf_dict = rod_dict | test_conf_dict
+
+	#### Salvando os Resultados
+	time_pd = pd.DataFrame.from_dict(time_result)
+	time_pd.to_csv(path_or_buf = path_result+'time-test-res-bAlexnet-02-'+opt+'-lr'+str(lr)+"-"+str(epochs)+'-epc.csv',sep="\t", index=False)
+
+	test_loss_pd = pd.DataFrame.from_dict(test_loss_dict)
+	test_loss_pd.to_csv(path_or_buf = path_result+'test-res-loss-bAlexnet-02-'+opt+'-lr'+str(lr)+"-"+str(epochs)+'-epc.csv',sep="\t", index=False)
+
+	test_acc_pd = pd.DataFrame.from_dict(test_acc_dict)
+	test_acc_pd.to_csv(path_or_buf = path_result+'test-res-acc-bAlexnet-02-'+opt+'-lr'+str(lr)+"-"+str(epochs)+'-epc.csv',sep="\t", index=False)
+
+	# print(test_conf_dict)
+	test_conf_pd = pd.DataFrame.from_dict(test_conf_dict)
+	test_conf_pd.to_csv(path_or_buf = path_result+'test-res-conf-bAlexnet-02-'+opt+'-lr'+str(lr)+"-"+str(epochs)+'-epc.csv',sep="\t", index=False)
+
 
 	# print(test_loss_dict)
-	# print('____________')
+	print('Fim!')

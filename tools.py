@@ -170,7 +170,10 @@ def parameter(model,lr,opt,n_branches):
 
 		# weight = np.linspace(0.3, 1, n_branches+1)
 		# weight = np.linspace(1, 0.3, n_branches+1)
-	weight = np.ones(n_branches+1)
+	# weight = np.ones(n_branches+1)	## (epc-600)
+	weight = [0.33,0.33,0.34]	### Melhor resultado (epc-200,601)
+	# weight = [0.25,0.25,0.5]  ### (epc-201)
+	# weight = [0.38,0.32,0.3]	### (epc-21)
 
 
 	return criterion, optimizer, weight
@@ -298,7 +301,7 @@ def run_epoch(device,loader,model,criterion,optimizer,weight,n_epochs,scaler,tra
 				# Forward pass
 				input, target = input.to(device), target.to(device)
 				# output_list,confidence_list, infered_class = model(input)	#Recebe o resultado da saída da rede em treinamento (3 listas)
-				output_list,confidence_list, infered_class = model.forward_eval(input,n_epochs)	#Recebe o resultado da saída da rede em treinamento (3 listas)
+				output_list,confidence_list, infered_class = model(input)	#Recebe o resultado da saída da rede em treinamento (3 listas)
 				model_loss,model_acc,ee_loss,ee_acc,ee_conf = compute_metrics(criterion, weight, output_list,confidence_list,infered_class,target)	#Calcula a loss e acc dos resultados obtidos
 		
 		del input,target,output_list,confidence_list,infered_class

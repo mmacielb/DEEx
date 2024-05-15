@@ -72,7 +72,7 @@ if __name__ == '__main__':
 	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 	print('device: ',device,'\n')
 
-	epochs = 200
+	epochs = 601
 
 	## Tx de apredizado
 	lr = 0.001 ##ou 

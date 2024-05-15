@@ -294,6 +294,7 @@ class EarlyExitAlexnet(nn.Module):
 
 	# 	return output, confidence, infered_class
 
+'''
 def forward_eval(self,x,p_min,p_tar=None):
 		output = [] #{i:[] for i in range(1,self.n_branches+2)}
 		confidence = [] #{i:[] for i in range(1,self.n_branches+2)}
@@ -348,6 +349,7 @@ def forward_eval(self,x,p_min,p_tar=None):
 			infered_class.append(infered_class_bb)		
 
 		return output, confidence, infered_class
+'''
 
 # class EarlyExitMobilenet(nn.Module):
 
